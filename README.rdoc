@@ -1,0 +1,77 @@
+= Billing Logic
+BillingAccount
+Product
+Subscription
+
+== BillingLogic::Account
+All calls supports hooks callback for :success, :failure, :error
+
+account = Account.new
+account.add Product.new
+account << Subscription.new, :success => lambda{ … something … }, :failure => …, :error => …
+account.migrate sub1, :to => sub2, :success => lambda{ … something … }
+account.remove product1
+account.remove subscription
+account.cancel subscription
+account.suspend!
+
+== Subscription
+fields:
+  balance
+  plan_id
+  price
+  status
+  trial_duration
+  trial_duration_unit
+  trial_period
+
+Class methods
+  new
+  create
+  update
+  cancel
+  find
+
+
+subscription = Subscription#new or Subscription#create
+subscription.renew
+subscription.cancel
+subscription.activate!
+subscription.deactivate!
+subscription.status #=> pending, active, expired, cancelled, past_due
+subscription.balance
+
+Subscription.cancel(id)
+
+== Product
+product = Product.new
+product.amount = 19.00
+
+== Plan
+fields:
+  plan id
+  plan name
+  description
+  trial period => true/false
+  billing day of month
+  number of billing cycles
+  amount
+  currency
+  billing cycle
+
+
+== Addons/Discounts
+id
+name
+descripion
+amount
+duration
+number_of_billing_cycles
+quantity
+never_expires
+
+== 
+
+
+
+
