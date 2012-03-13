@@ -12,20 +12,20 @@ describe BillingLogic::BillingCycle do
       @one_year_cycle     = BillingCycle.new(:period => :year,      :frequency => 1)
     end
 
-    it "know about its period type" do
+    it "should know about its period type" do
       @cycle_45_days.period.should == :day
     end
 
-    it "know about its frequency" do
+    it "should know about its frequency" do
       @cycle_45_days.frequency.should == 45
     end
 
-    it "be able to calculate its periodicity" do
+    it "should be able to calculate its periodicity" do
       @cycle_45_days.periodicity.should == 45
       @one_year_cycle.periodicity.should == 364
     end
 
-    it "know how to compare itself" do
+    it "should know how to compare itself" do
       @one_day_cycle.should   < @one_week_cycle
       @one_week_cycle.should  < @semimonth_cycle
       @semimonth_cycle.should < @one_month_cycle
