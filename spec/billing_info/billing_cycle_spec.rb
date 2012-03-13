@@ -22,7 +22,7 @@ describe BillingLogic::BillingCycle do
 
     it "should be able to calculate its periodicity" do
       @cycle_45_days.periodicity.should == 45
-      @one_year_cycle.periodicity.should == 364
+      @one_year_cycle.periodicity.should == 365
     end
 
     it "should know how to compare itself" do
