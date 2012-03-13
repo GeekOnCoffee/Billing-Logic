@@ -1,0 +1,36 @@
+require 'spec_helper'
+
+describe BillingLogic::BillingCycle do
+  include BillingLogic
+  context "a billing cycle" do
+    before do 
+      @cycle_45_days      = BillingCycle.new(:period => :day,       :frequency => 45)
+      @one_day_cycle      = BillingCycle.new(:period => :day,       :frequency => 1)
+      @one_week_cycle     = BillingCycle.new(:period => :week,      :frequency => 1)
+      @semimonth_cycle    = BillingCycle.new(:period => :semimonth, :frequency => 1)
+      @one_month_cycle    = BillingCycle.new(:period => :month,     :frequency => 1)
+      @one_year_cycle     = BillingCycle.new(:period => :year,      :frequency => 1)
+    end
+
+    it "know about its period type" do
+      @cycle_45_days.period.should == :day
+    end
+
+    it "know about its frequency" do
+      @cycle_45_days.frequency.should == 45
+    end
+
+    it "be able to calculate its periodicity" do
+      @cycle_45_days.periodicity.should == 45
+      @one_year_cycle.periodicity.should == 364
+    end
+
+    it "know how to compare itself" do
+      @one_day_cycle.should   < @one_week_cycle
+      @one_week_cycle.should  < @semimonth_cycle
+      @semimonth_cycle.should < @one_month_cycle
+      @one_month_cycle.should < @cycle_45_days
+      @cycle_45_days.should   < @one_year_cycle 
+    end
+  end
+end
