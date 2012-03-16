@@ -5,6 +5,7 @@ gemspec
 group :test, :development do
   gem 'guard'
   gem 'guard-rspec'
+  gem 'ruby-debug19', :platforms => :mri_19
 end
 
 group :test do
