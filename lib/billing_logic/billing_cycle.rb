@@ -22,6 +22,10 @@ module BillingLogic
       (closest_anniversary_date_including(date) - anniversary).abs
     end
 
+    def next_payment_date
+      closest_anniversary_date_including(Date.today)
+    end
+
     private
     def time_unit_measure
       TIME_UNITS[self.period]
