@@ -42,7 +42,7 @@ module BillingLogic
       group = {}
       new_products.each do |product|
         if inactive_products.include?(product)
-          next_payment_dates = profiles_by_status(false).select { |profile| profile.products.include?(product) }.map { |profile| profile.next_payment_date }
+          next_payment_dates = profiles_by_status(active_or_pending = false).select { |profile| profile.products.include?(product) }.map { |profile| profile.next_payment_date }
           next_payment_date = next_payment_dates.sort.first
           group[next_payment_date] ||= []
           group[next_payment_date] << product
@@ -66,7 +66,6 @@ module BillingLogic
     def current_products(opts = {})
       profiles_by_status(opts[:active]).map { |profile| profile.products }.flatten
     end
-
 
     def profiles_by_status(active_or_pending = nil)
       current_state.reject { |profile| !profile.active_or_pending? == active_or_pending}
