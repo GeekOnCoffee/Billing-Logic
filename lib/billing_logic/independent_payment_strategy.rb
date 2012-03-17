@@ -42,8 +42,7 @@ module BillingLogic
       group = {}
       new_products.each do |product|
         if inactive_products.include?(product)
-          next_payment_dates = profiles_by_status(active_or_pending = false).select { |profile| profile.products.include?(product) }.map { |profile| profile.next_payment_date }
-          next_payment_date = next_payment_dates.sort.first
+          next_payment_date = next_payment_date_from_profile_with_product(product)
           group[next_payment_date] ||= []
           group[next_payment_date] << product
         else
@@ -52,6 +51,14 @@ module BillingLogic
         end
       end
       group.map { |k, v| group.assoc(k).reverse } 
+    end
+
+    def next_payment_date_from_profile_with_product(product)
+      profiles_by_status(active_or_pending = false).select do |profile| 
+        profile.products.include?(product) 
+      end.map do |profile| 
+        profile.next_payment_date 
+      end.sort.first
     end
 
     # for easy stubbing/subclassing/replacement
