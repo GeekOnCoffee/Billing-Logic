@@ -82,7 +82,7 @@ module BillingLogic
     # this should be part of a separate strategy object
     def add_commands_for_products_to_be_removed
       current_state.each do |profile|
-        remaining_products = profile.products.reject { |product| products_to_be_removed.include?(product) }
+        remaining_products = remove_products_from_profile(profile)
         if remaining_products.empty? # all products in payment profile needs to be removed
           @command_list << cancel_recurring_payment_command(profile.id)
         elsif remaining_products.size == profile.products.size # nothing has changed
@@ -92,6 +92,10 @@ module BillingLogic
           @command_list << create_recurring_payment_command(remaining_products, profile.next_payment_date)
         end
       end
+    end
+
+    def remove_products_from_profile(profile)
+      profile.products.reject { |product| products_to_be_removed.include?(product) }
     end
 
     # these messages seems like they should be pluggable

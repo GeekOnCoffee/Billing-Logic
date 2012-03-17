@@ -77,6 +77,25 @@ module BillingLogic
       end
     end
 
+    describe "#products_to_be_removed" do
+      def products_to_names(products)
+        products.map{|p| p.name}.joi(', ')
+      end
+      it "calculates correctly the products to be removed" do
+        [
+          {profile: [profile_a], desired_state: [product_a, product_b], expected: []},
+          {profile: [profile_a], desired_state: [product_a], expected: [product_b]},
+          {profile: [profile_a], desired_state: [product_c], expected: [product_a, product_b]},
+          {profile: [profile_a], desired_state: [], expected: [product_a, product_b]},
+          {profile: [canceled_profile_d], desired_state: [], expected: []}
+        ].each do |spec|
+          strategy.current_state = spec[:profile]
+          strategy.desired_state = spec[:desired_state]
+          strategy.products_to_be_removed.should == spec[:expected]
+        end
+      end
+    end
+
 
     context 'with empty current state' do
       let(:strategy) { IndependentPaymentStrategy.new }
@@ -123,7 +142,7 @@ module BillingLogic
         end
       end
 
-      context "when making removing a partial product from a profile" do
+      context "when removing a partial product from a profile" do
         before do 
           strategy_with_3_current_products.desired_state = [product_b, product_c]
         end
