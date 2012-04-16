@@ -11,15 +11,19 @@ BILLING_CYCLE = Transform /^(every \d+ (?:day|month|year))$/ do |string|
 end
 
 MONEY = Transform /^\$([\d\.]+)$/ do |money|
-  money.to_f
+  money
 end
 
 PRODUCT_FORMATTING = Transform /^(\w+) @ (#{MONEY})$/ do |product_name, price|
-  OpenStruct.new(:name => product_name, :price => price)
+  OpenStruct.new(:name => product_name, :price => price, :id => "#{product_name} @ #{price}")
 end
 
 DESIRED_STATE = Transform /^((?:\w+) @ (?:#{MONEY}) (?:#{BILLING_CYCLE}))$/ do |string|
   string
+end
+
+ASSERTION = Transform /^(|don't |do not |)$/ do |assertion|
+  !(assertion =~ /(don't |do not |ain't )/)
 end
 
 

@@ -100,6 +100,8 @@ module BillingLogic
     # this should be part of a separate strategy object
     def add_commands_for_products_to_be_removed
       current_state.each do |profile|
+        # We need to issue refunds before cancelling profiles
+        @command_list << issue_refunds_if_necessary(profile)
         remaining_products = remove_products_from_profile(profile)
         if remaining_products.empty? # all products in payment profile needs to be removed
           @command_list << cancel_recurring_payment_command(profile.id)
@@ -114,6 +116,25 @@ module BillingLogic
 
     def remove_products_from_profile(profile)
       profile.products.reject { |product| products_to_be_removed.include?(product) }
+    end
+
+    def issue_refunds_if_necessary(profile)
+      ret = []
+      profile.products.find_all{ |product| products_to_be_removed.include?(product) }.map do |refunded_product|
+        if profile.last_payment_refundable?
+          ret << refund_recurring_payments_command(profile.id, profile.last_payment_amount)
+          ret << disable_subscription(profile.id)
+        end
+      end
+      ret
+    end
+
+    def refund_recurring_payments_command(profile_id, amount)
+      payment_command_builder_class.refund_recurring_payments_command(profile_id, amount)
+    end
+
+    def disable_subscription(profile_id)
+      payment_command_builder_class.disable_subscription(profile_id)
     end
 
     # these messages seems like they should be pluggable

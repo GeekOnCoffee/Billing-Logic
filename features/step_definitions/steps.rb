@@ -12,6 +12,14 @@ module StrategyHelper
           "cancel #{profile_id} now"
         end
       end
+
+      def refund_recurring_payments_command(profile_id, amount)
+        "refund $#{amount} to #{profile_id} now"
+      end
+
+      def disable_subscription(profile_id)
+        "disable #{profile_id} now"
+      end
     end
   end
 
@@ -46,6 +54,14 @@ module StrategyHelper
     string =~ ANNIVERSARY
   end
 
+  def command_list_should_include(command, bool = true)
+    if bool
+      strategy.command_list.should include(command)
+    else
+      strategy.command_list.should_not include(command)
+    end
+  end
+
 end
 
 World(StrategyHelper)
@@ -71,11 +87,13 @@ Given /^I have the following subscriptions:$/ do |table|
                :products =>  [OpenStruct.new(
                                   :name => str_to_product_formatting(row[0]).name,
                                   :price => str_to_product_formatting(row[0]).price, 
-                                  :billing_cycle => str_to_billing_cycle(row[1])
+                                  :billing_cycle => str_to_billing_cycle(row[1]),
+                                  :payments => []
                                  )],
                :next_payment_date =>  next_billing_date,
                :billing_cycle => str_to_billing_cycle(row[1], next_billing_date),
-               :active_or_pending? => row[2] =~ /active/
+               :active_or_pending? => row[2] =~ /active/,
+               :last_payment_refundable? => false
               )
   end
 end
@@ -93,12 +111,12 @@ When /^I change to having: (.*)$/ do |products|
 end
 
 
-Then /^I expect the following action: (add #{PRODUCT_FORMATTING} on #{DATE}.*)$/ do |command|
-  strategy.command_list.should include(command)
+Then /^I (#{ASSERTION})expect the following action: (add #{PRODUCT_FORMATTING} on #{DATE}.*)$/ do |assertion, command|
+  command_list_should_include(command, assertion)
 end
 
 
-Then /^I expect the following action: (cancel #{PRODUCT_FORMATTING} now)$/ do |command|
-  strategy.command_list.should include(command)
+Then /^I (#{ASSERTION})expect the following action: (cancel #{PRODUCT_FORMATTING} now)$/ do |assertion, command|
+  command_list_should_include(command, assertion)
 end
 
