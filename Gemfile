@@ -13,4 +13,6 @@ group :test do
   gem 'shoulda'
   gem 'rake'
   gem 'ZenTest'
+  gem 'cucumber'
+  gem 'timecop'
 end
