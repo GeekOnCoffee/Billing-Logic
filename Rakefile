@@ -15,7 +15,8 @@ task :ci => [:spec, :cucumber]
 
 desc 'Run integration test'
 Cucumber::Rake::Task.new do |t|
-  t.cucumber_opts = %w{--format progress}
+  output = ENV['CC_BUILD_ARTIFACTS'] || "./log"
+  t.cucumber_opts = ["--format html --out #{output}/cukes.html", "-f pretty"oe]
 end
 
 
