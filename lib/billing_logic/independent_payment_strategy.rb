@@ -2,19 +2,23 @@ module BillingLogic
   class IndependentPaymentStrategy
     attr_accessor :desired_state, :current_state, :payment_command_builder_class
     def initialize(opts = {})
-      @current_state = opts.delete(:current_state) || []
+      self.current_state = opts.delete(:current_state) || []
       @desired_state = opts.delete(:desired_state) || []
       @command_list = []
       @payment_command_builder_class = opts.delete(:payment_command_builder_class) || PaymentCommandBuilder
     end
 
-    def desired_state=(value)
-      @desired_state = value
-    end
-
     def command_list
       calculate_list
       @command_list.flatten
+    end
+
+    def current_state=(subscriptions)
+      @current_state = removed_obsolete_subscriptions(subscriptions)
+    end
+
+    def removed_obsolete_subscriptions(subscriptions)
+      subscriptions.reject{|sub| sub.next_payment_date < Date.today }
     end
 
     def calculate_list
@@ -26,7 +30,9 @@ module BillingLogic
     def add_commands_for_products_to_be_added
       unless products_to_be_added.empty?
         products_to_be_added.each do |group_of_product, date|
-          @command_list << create_recurring_payment_command(group_of_product, date)
+          group_of_product.each do |product|
+            @command_list << create_recurring_payment_command([product], date)
+          end
         end
       end
     end
@@ -34,28 +40,33 @@ module BillingLogic
     # Question:
     # Should the method return a data structure or an object?
     def products_to_be_added
-      group_by_date(desired_state - current_active_or_pending_products)
+      new_products = desired_state.reject do |el|
+        current_active_or_pending_products.map{|el| el.name}.include?(el.name) &&
+          el.billing_cycle.periodicity  == current_active_or_pending_products.detect{|cael| cael.name == el.name}.billing_cycle.periodicity
+      end
+      group_by_date(new_products)
     end
 
     # this doesn't feel like it should be here
     def group_by_date(new_products)
       group = {}
       new_products.each do |product|
-        if inactive_products.include?(product)
-          next_payment_date = next_payment_date_from_profile_with_product(product)
-          group[next_payment_date] ||= []
-          group[next_payment_date] << product
+        if inactive_products.map{|prod| prod.name}.include?(product.name)
+          date = next_payment_date_from_profile_with_product(product)
+        elsif current_active_or_pending_products.map{|prod2| prod2.name}.include?(product.name)
+          date = next_payment_date_from_profile_with_product(product, :active => true)
         else
-          group[today] ||= []
-          group[today] << product
+          date = today
         end
+        group[date] ||= []
+        group[date] << product
       end
       group.map { |k, v| group.assoc(k).reverse } 
     end
 
-    def next_payment_date_from_profile_with_product(product)
-      profiles_by_status(active_or_pending = false).select do |profile| 
-        profile.products.include?(product) 
+    def next_payment_date_from_profile_with_product(product, opts = {:active => false})
+      profiles_by_status(opts[:active]).select do |profile| 
+        profile.products.map{|product| product.name}.include?(product.name)
       end.map do |profile| 
         profile.next_payment_date 
       end.sort.first

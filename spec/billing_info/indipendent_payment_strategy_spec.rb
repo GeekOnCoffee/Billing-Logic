@@ -48,6 +48,7 @@ module BillingLogic
                                     price: 30,
                                     id: 'i-2',
                                     active_or_pending?: true,
+                                    next_payment_date: monthly_cycle.next_payment_date
                                    )
                                 ]
                               )
@@ -72,8 +73,8 @@ module BillingLogic
 
       it "should return products that are not in the current state" do
         strategy.current_state = []
-        strategy.desired_state = [:new_product]
-        strategy.products_to_be_added.should == [[[:new_product], Date.today]]
+        strategy.desired_state = [product_a]
+        strategy.products_to_be_added.should == [[[product_a], Date.today]]
       end
     end
 
