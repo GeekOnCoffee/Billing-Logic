@@ -10,7 +10,7 @@ And /^I made the following payment: paid (#{MONEY}) for (#{PRODUCT_FORMATTING}) 
   payment_date = str_to_date(payment_date)
   strategy.current_state.each do |profile|
     profile.products.each do |product|
-      if product.name == str_to_product_formatting(profile_object.id).name
+      if product.name == profile_object.first.name
         profile.last_payment = OpenStruct.new(:amount => amount,
                                               :payment_date => payment_date,
                                               :refundable? => (Time.now - payment_date.to_time).to_i < grace_period)
@@ -50,13 +50,13 @@ And /^I made the following payments:$/ do |table|
   end
 end
 
-Then /^I (#{ASSERTION})expect the following action: (|refund \$(?:\d+) to #{PRODUCT_FORMATTING} now)$/ do |assertion, command|
-  command_list_should_include(command, assertion)
-end
-
-Then /^I (#{ASSERTION})expect the following action: (disable #{PRODUCT_FORMATTING} now)$/ do |assertion, command|
-  command_list_should_include(command, assertion)
-end
+# Then /^I (#{ASSERTION})expect the following action: (|refund \$(?:\d+) to #{PRODUCT_FORMATTING} now)$/ do |assertion, command|
+#   command_list_should_include(command, assertion)
+# end
+# 
+# Then /^I (#{ASSERTION})expect the following action: (disable #{PRODUCT_FORMATTING} now)$/ do |assertion, command|
+#   command_list_should_include(command, assertion)
+# end
 
 Given /^The cancellation grace period is of (\d+) (hour|day|month|week|year)s?$/ do |amount, length|
   grace_period(amount.to_i * 60 * 60)

@@ -12,19 +12,18 @@ Feature: Same Day Cancellation Policy
       | A @ $30       | billed every 1 month | active    | with current permissions and the next billing date is on | 4/15/12              |
     And   I made the following payment: <payment made>
     When  I change to having: <desired state>
-    Then  I expect the following action: <action>
+    Then  I expect the following action: <actions>
     Examples: A customer that have made a payment of $30 the same day of cancellation
-      | grace period | payment made                    | desired state | action                    |
-      | 24 hours     | paid $30 for A @ $30 on 3/15/12 |               | refund $30 to A @ $30 now |
-      | 24 hours     | paid $30 for A @ $30 on 3/15/12 |               | disable A @ $30 now       |
+      | grace period | payment made                    | desired state | actions                    |
+      | 24 hours     | paid $30 for A @ $30 on 3/15/12 | nothing       | refund $30 to A @ $30 now, disable A @ $30 now |
 
     Examples: A customer that made a refundable payment greater than the monthly payment because of a startup fee
-      | grace period | payment made                    | desired state | action                    |
-      | 24 hours     | paid $40 for A @ $30 on 3/15/12 |               | refund $40 to A @ $30 now |
+      | grace period | payment made                    | desired state | actions                   |
+      | 24 hours     | paid $40 for A @ $30 on 3/15/12 | nothing       | refund $40 to A @ $30 now |
 
     Examples: A customer that made a refundable payment lesser than the monthly payment because of an initial discount
-      | grace period | payment made                    | desired state | action                    |
-      | 24 hours     | paid $20 for A @ $30 on 3/15/12 |               | refund $20 to A @ $30 now |
+      | grace period | payment made                    | desired state | actions                   |
+      | 24 hours     | paid $20 for A @ $30 on 3/15/12 | nothing       | refund $20 to A @ $30 now |
 
 
   Scenario Outline: User subscribes, then cancels not within the grace period
@@ -40,5 +39,5 @@ Feature: Same Day Cancellation Policy
     And   I do not expect the following action: <inaction>
     Examples: A customer that have made a payment just outside of the grace period by 1 second
       | grace period | payment made                    | desired state | action                    | inaction |
-      | 24 hours     | paid $30 for A @ $30 on 3/14/12 |               | cancel A @ $30 now        | refund $30 to A @ $30 now |
+      | 24 hours     | paid $30 for A @ $30 on 3/14/12 | nothing       | cancel A @ $30 now        | refund $30 to A @ $30 now |
 

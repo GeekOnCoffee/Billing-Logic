@@ -3,7 +3,19 @@ module StrategyHelper
     class << self
       def create_recurring_payment_commands(products, next_payment_date = Date.today)
         products.map do |product|
-          "add #{product.name} @ $#{product.price} on #{next_payment_date.strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}"
+          if product.billing_cycle.frequency == 1
+            period_abbrev = case product.billing_cycle.period
+                            when :year; '/yr'
+                            when :month;'/mo'
+                            when :week; '/wk'
+                            when :day;  '/day'
+                            else
+                              product.billing_cycle.period
+                            end
+            "add #{product.name} @ $#{product.price}#{period_abbrev} on #{next_payment_date.strftime('%m/%d/%y')}"
+          else
+            "add #{product.name} @ $#{product.price} on #{next_payment_date.strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}"
+          end
         end
       end
 
@@ -33,9 +45,16 @@ module StrategyHelper
 
   def str_to_billing_cycle(string, anniversary = Date.today)
     billing_cycle = BillingLogic::BillingCycle.new
-    if (string =~ /every (\d+)\s(\w+)$/)
+    case string
+    when /every (\d+)\s(\w+)$/
       billing_cycle.frequency    = $1.to_i
       billing_cycle.period = $2.to_sym
+    when /\/mo/
+      billing_cycle.frequency    = 1
+      billing_cycle.period = :month
+    when /\/yr/
+      billing_cycle.frequency    = 1
+      billing_cycle.period = :year
     end
     billing_cycle.anniversary = anniversary
     billing_cycle
@@ -99,24 +118,14 @@ Given /^I have the following subscriptions:$/ do |table|
 end
 
 
-When /^I change to having: (.*)$/ do |products|
-  strategy.desired_state = "#{products}".split(/, /).map do |product_map|
-                             product_data = str_to_product_formatting(product_map)
-                             OpenStruct.new(
-                                  :name => product_data.name,
-                                  :price => product_data.price, 
-                                  :billing_cycle => str_to_billing_cycle(product_map)
-                                 )
-                           end
+When /^I change to having: (nothing|.*)$/ do |products|
+  strategy.desired_state = products == 'nothing' ? [] : products
 end
 
 
-Then /^I (#{ASSERTION})expect the following action: (add #{PRODUCT_FORMATTING} on #{DATE}.*)$/ do |assertion, command|
-  command_list_should_include(command, assertion)
-end
-
-
-Then /^I (#{ASSERTION})expect the following action: (cancel #{PRODUCT_FORMATTING} now)$/ do |assertion, command|
-  command_list_should_include(command, assertion)
+Then /^(?:|I )(#{ASSERTION})expect the following action: ((?:add|cancel|disable|refund \$\d+ to) #{PRODUCT_FORMATTING} (?:on #{DATE}|now).*)$/ do |assertion, commands|
+  commands.split(/, /).each do |command|
+    command_list_should_include(command, assertion)
+  end
 end
 

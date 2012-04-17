@@ -10,10 +10,9 @@ Feature: Independent Payment Strategy
     When  I change to having: <added products>
     Then  I expect the following action: <action>
     Examples:
-      | added products                                | action                 |
-      | A @ $30 every 1 month                         | add A @ $30 on 03/15/12 renewing every 1 month |
-      | A @ $30 every 1 month, B @ $40 every 1 month  | add A @ $30 on 03/15/12 renewing every 1 month |
-      | A @ $30 every 1 month, B @ $40 every 1 month  | add B @ $40 on 03/15/12 renewing every 1 month |
+      | added products          | action                 |
+      | A @ $30/mo         | add A @ $30/mo on 03/15/12 |
+      | A @ $30/mo, B @ $40/mo  | add A @ $30/mo on 03/15/12, add B @ $40/mo on 03/15/12 |
 
    Scenario Outline: Removing a product
      Given I support Independent Payment Strategy
@@ -29,51 +28,50 @@ Feature: Independent Payment Strategy
      Then  I expect the following action: <action>
      Examples: Removing all products
        | desired state | action               |
-       |               | cancel A @ $30 now   |
-       |               | cancel B @ $20 now   |
+       | nothing       | cancel A @ $30 now, cancel B @ $20 now |
 
      Examples: Removing partial products
        | desired state               | action               |
-       | A @ $30 every 1 month       | cancel B @ $20 now   |
-       | B @ $20 every 1 month       | cancel A @ $30 now   |
+       | A @ $30/mo       | cancel B @ $20 now   |
+       | B @ $20/mo       | cancel A @ $30 now   |
 
      Examples: Re-adding a cancelled product C that expires in the future
        | desired state                                                         | action                  |
-       | A @ $30 every 1 month, B @ $20 every 1 month, C @ $50 every 1 month   | add C @ $50 on 04/25/12 renewing every 1 month |
+       | A @ $30/mo, B @ $20/mo, C @ $50/mo | add C @ $50/mo on 04/25/12 |
 
      Examples: Re-adding a cancelled product that expires today
        | desired state                                                         | action                  |
-       | A @ $30 every 1 month, B @ $20 every 1 month, F @ $10 every 1 month   | add F @ $10 on 03/15/12 renewing every 1 month |
+       | A @ $30/mo, B @ $20/mo, F @ $10/mo   | add F @ $10/mo on 03/15/12 |
        
      Examples: Re-adding a cancelled product that expired in the past
        | desired state                                                         | action                  |
-       | A @ $30 every 1 month, B @ $20 every 1 month, G @ $15 every 1 month   | add G @ $15 on 03/15/12 renewing every 1 month |
+       | A @ $30/mo, B @ $20/mo, G @ $15/mo   | add G @ $15/mo on 03/15/12 |
 
      Examples: Re-adding & removing product
        | desired state                                                         | action                  |
-       | A @ $30 every 1 month, C @ $50 every 1 month                          | add C @ $50 on 04/25/12 renewing every 1 month |
-       | A @ $30 every 1 month, C @ $50 every 1 month                          | cancel B @ $20 now      |
+       | A @ $30/mo, C @ $50/mo                          | cancel B @ $20 now, add C @ $50/mo on 04/25/12 |
 
      Examples: Adding, Re-adding & removing product
        | desired state                                                         | action                  |
-       | A @ $30 every 1 month, C @ $50 every 1 month, D @ $40 every 1 month   | add C @ $50 on 04/25/12 renewing every 1 month |
-       | A @ $30 every 1 month, C @ $50 every 1 month, D @ $40 every 1 month   | add D @ $40 on 03/15/12 renewing every 1 month |
-       | A @ $30 every 1 month, C @ $50 every 1 month, D @ $40 every 1 month   | cancel B @ $20 now      |
+       | A @ $30/mo, C @ $50/mo, D @ $40/mo   | cancel B @ $20 now, add C @ $50/mo on 04/25/12, add D @ $40/mo on 03/15/12 |
 
      Examples: changing the periodicity of product A from monthly to yearly
        | desired state                                                         | action                   |
-       | A @ $99 every 1 year, B @ $20 every 1 month                           | cancel A @ $30 now                                  |
-       | A @ $99 every 1 year, B @ $20 every 1 month                           | add A @ $99 on 04/01/12 renewing every 1 year       |
+       | A @ $99/yr, B @ $20/mo               | cancel A @ $30 now, add A @ $99/yr on 04/01/12 |
 
      Examples: 
       Adding a new product D, 
       Re-adding a cancelled product C, 
       Changing the periodicity of A product, 
       Removing product B
-       | desired state                                                         | action                   |
-       | A @ $60 every 1 year, C @ $50 every 1 year, D @ $40 every 1 year     | cancel A @ $30 now       |
-       | A @ $60 every 1 year, C @ $50 every 1 year, D @ $40 every 1 year     | add A @ $60 on 04/01/12 renewing every 1 year |
-       | A @ $60 every 1 year, C @ $50 every 1 year, D @ $40 every 1 year     | cancel B @ $20 now       |
-       | A @ $60 every 1 year, C @ $50 every 1 year, D @ $40 every 1 year     | add C @ $50 on 04/25/12 renewing every 1 year |
-       | A @ $60 every 1 year, C @ $50 every 1 year, D @ $40 every 1 year     | add D @ $40 on 03/15/12 renewing every 1 year |
+       | desired state                      | action                   |
+       | A @ $60/yr, C @ $50/yr, D @ $40/yr | cancel A @ $30 now, add A @ $60/yr on 04/01/12, cancel B @ $20 now, add C @ $50/yr on 04/25/12, add D @ $40/yr on 03/15/12 |
+
+       #  """
+       #                                                                         cancel A @ $30 now, 
+       #                                                                         add A @ $60 on 04/01/12 renewing every 1 year, 
+       #                                                                         cancel B @ $20 now, 
+       #                                                                         add C @ $50 on 04/25/12 renewing every 1 year, 
+       #                                                                         add D @ $40 on 03/15/12 renewing every 1 year 
+       #                                                                         """                       |
 
