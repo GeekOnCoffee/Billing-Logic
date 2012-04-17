@@ -116,11 +116,9 @@ Given /^I have the following subscriptions:$/ do |table|
   end
 end
 
-
 When /^I change to having: (nothing|.*)$/ do |products|
   strategy.desired_state = products == 'nothing' ? [] : products
 end
-
 
 Then /^(?:|I )(#{ASSERTION})expect the following action: ((?:add|cancel|disable|refund \$\d+ to) #{PRODUCT_FORMATTING} (?:on #{DATE}|now).*)$/ do |assertion, commands|
   commands.split(/, /).each do |command|

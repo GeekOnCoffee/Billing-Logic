@@ -50,14 +50,6 @@ And /^I made the following payments:$/ do |table|
   end
 end
 
-# Then /^I (#{ASSERTION})expect the following action: (|refund \$(?:\d+) to #{PRODUCT_FORMATTING} now)$/ do |assertion, command|
-#   command_list_should_include(command, assertion)
-# end
-# 
-# Then /^I (#{ASSERTION})expect the following action: (disable #{PRODUCT_FORMATTING} now)$/ do |assertion, command|
-#   command_list_should_include(command, assertion)
-# end
-
 Given /^The cancellation grace period is of (\d+) (hour|day|month|week|year)s?$/ do |amount, length|
   grace_period(amount.to_i * 60 * 60)
 end
