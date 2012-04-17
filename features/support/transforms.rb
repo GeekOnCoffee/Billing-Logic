@@ -14,11 +14,10 @@ MONEY = Transform /^\$([\d\.]+)$/ do |money|
   money
 end
 
+SINGLE_PRODUCT_REGEX = /(\w+) @ \$([\d\.]+)(\/mo|\/yr)?/
 PRODUCT_FORMATTING = Transform /^((?:\w+) @ (?:#{MONEY})(?:|\/mo|\/yr)(?:, (?:\w+) @ (?:#{MONEY})(?:|\/mo|\/yr))*)$/ do |products|
-  products.split(/, /).map do |product_string|
-    product_string =~ /(\w+) @ \$([\d\.]+)(\/mo|\/yr)?/
-    billing_cycle = $3 ? BillingLogic::BillingCycle.new(:frequency => 1, :period => $3.include?('mo') ? :month : :year) : nil
-    OpenStruct.new(:name => $1, :price => $2, :id => "#{$1} @ #{$2}", :billing_cycle => billing_cycle)
+  products.split(/, /).map do |string|
+    str_to_product_formatting(string) 
   end
 end
 

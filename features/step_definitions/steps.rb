@@ -65,8 +65,9 @@ module StrategyHelper
   end
 
   def str_to_product_formatting(string)
-    string =~ /^(\w+) @ \$([\d\.]+)/
-    OpenStruct.new(:name => $1, :price => $2)
+    string =~ SINGLE_PRODUCT_REGEX
+    billing_cycle = $3 ? BillingLogic::BillingCycle.new(:frequency => 1, :period => $3.include?('mo') ? :month : :year) : nil
+    OpenStruct.new(:name => $1, :price => $2, :id => "#{$1} @ #{$2}", :billing_cycle => billing_cycle)
   end
 
   def str_to_anniversary(string)
