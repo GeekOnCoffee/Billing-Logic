@@ -25,6 +25,5 @@ Feature: Same Day Cancellation Policy
 
     Examples: A customer that made a refundable payment greater than the monthly payment
       | grace period | payment made                    | desired state | action                    | inaction |
-
       | 24 hours     | paid $40 for A @ $30 on 3/15/12 |               | refund $40 to A @ $30 now | |
 
