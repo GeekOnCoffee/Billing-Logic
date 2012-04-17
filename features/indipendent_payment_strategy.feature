@@ -19,21 +19,21 @@ Feature: Independent Payment Strategy
      And   Today is 3/15/12
      And   I have the following subscriptions:
      # | product names | billing cycle        | status    | #comments                                                | next billing date   |
-       | A @ $30       | billed every 1 month | active    | with current permissions and the next billing date is on | 4/1/12              |
-       | B @ $20       | billed every 1 month | active    | with current permissions and the next billing date is on | 4/20/12             |
-       | C @ $50       | billed every 1 year  | cancelled | with permissions expiring in the future on               | 4/25/12             |
-       | F @ $10       | billed every 1 month | cancelled | with permissions expiring today                          | 3/15/12             |
-       | G @ $15       | billed every 1 month | cancelled | with permissions expired in the past on                  | 3/13/12             |
+       | A @ $30/mo | active    | with current permissions and the next billing date is on | 4/1/12              |
+       | B @ $20/mo | active    | with current permissions and the next billing date is on | 4/20/12             |
+       | C @ $50/yr | cancelled | with permissions expiring in the future on               | 4/25/12             |
+       | F @ $10/mo | cancelled | with permissions expiring today                          | 3/15/12             |
+       | G @ $15/mo | cancelled | with permissions expired in the past on                  | 3/13/12             |
      When  I change to having: <desired state>
      Then  I expect the following action: <action>
      Examples: Removing all products
        | desired state | action               |
-       | nothing       | cancel A @ $30 now, cancel B @ $20 now |
+       | nothing       | cancel A @ $30/mo now, cancel B @ $20/mo now |
 
      Examples: Removing partial products
        | desired state               | action               |
-       | A @ $30/mo       | cancel B @ $20 now   |
-       | B @ $20/mo       | cancel A @ $30 now   |
+       | A @ $30/mo       | cancel B @ $20/mo now   |
+       | B @ $20/mo       | cancel A @ $30/mo now   |
 
      Examples: Re-adding a cancelled product C that expires in the future
        | desired state                                                         | action                  |
@@ -49,15 +49,15 @@ Feature: Independent Payment Strategy
 
      Examples: Re-adding & removing product
        | desired state                                                         | action                  |
-       | A @ $30/mo, C @ $50/mo                          | cancel B @ $20 now, add C @ $50/mo on 04/25/12 |
+       | A @ $30/mo, C @ $50/mo                          | cancel B @ $20/mo now, add C @ $50/mo on 04/25/12 |
 
      Examples: Adding, Re-adding & removing product
        | desired state                                                         | action                  |
-       | A @ $30/mo, C @ $50/mo, D @ $40/mo   | cancel B @ $20 now, add C @ $50/mo on 04/25/12, add D @ $40/mo on 03/15/12 |
+       | A @ $30/mo, C @ $50/mo, D @ $40/mo   | cancel B @ $20/mo now, add C @ $50/mo on 04/25/12, add D @ $40/mo on 03/15/12 |
 
      Examples: changing the periodicity of product A from monthly to yearly
        | desired state                                                         | action                   |
-       | A @ $99/yr, B @ $20/mo               | cancel A @ $30 now, add A @ $99/yr on 04/01/12 |
+       | A @ $99/yr, B @ $20/mo               | cancel A @ $30/mo now, add A @ $99/yr on 04/01/12 |
 
      Examples: 
       Adding a new product D, 
@@ -65,7 +65,7 @@ Feature: Independent Payment Strategy
       Changing the periodicity of A product, 
       Removing product B
        | desired state                      | action                   |
-       | A @ $60/yr, C @ $50/yr, D @ $40/yr | cancel A @ $30 now, add A @ $60/yr on 04/01/12, cancel B @ $20 now, add C @ $50/yr on 04/25/12, add D @ $40/yr on 03/15/12 |
+       | A @ $60/yr, C @ $50/yr, D @ $40/yr | cancel A @ $30/mo now, add A @ $60/yr on 04/01/12, cancel B @ $20/mo now, add C @ $50/yr on 04/25/12, add D @ $40/yr on 03/15/12 |
 
        #  """
        #                                                                         cancel A @ $30 now, 

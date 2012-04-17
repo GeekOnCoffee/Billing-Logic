@@ -4,17 +4,9 @@ module StrategyHelper
       def create_recurring_payment_commands(products, next_payment_date = Date.today)
         products.map do |product|
           if product.billing_cycle.frequency == 1
-            period_abbrev = case product.billing_cycle.period
-                            when :year; '/yr'
-                            when :month;'/mo'
-                            when :week; '/wk'
-                            when :day;  '/day'
-                            else
-                              product.billing_cycle.period
-                            end
-            "add #{product.name} @ $#{product.price}#{period_abbrev} on #{next_payment_date.strftime('%m/%d/%y')}"
+            "add #{product.id} on #{next_payment_date.strftime('%m/%d/%y')}"
           else
-            "add #{product.name} @ $#{product.price} on #{next_payment_date.strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}"
+            "add #{product.id} on #{next_payment_date.strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}"
           end
         end
       end
@@ -65,9 +57,18 @@ module StrategyHelper
   end
 
   def str_to_product_formatting(string)
+    # TODO: we need to support more than just year & month
+    #             period_abbrev = case product.billing_cycle.period
+    #                         when :year; '/yr'
+    #                         when :month;'/mo'
+    #                         when :week; '/wk'
+    #                         when :day;  '/day'
+    #                         else
+    #                           product.billing_cycle.period
+    #                         end
     string =~ SINGLE_PRODUCT_REGEX
     billing_cycle = $3 ? BillingLogic::BillingCycle.new(:frequency => 1, :period => $3.include?('mo') ? :month : :year) : nil
-    OpenStruct.new(:name => $1, :price => $2, :id => "#{$1} @ #{$2}", :billing_cycle => billing_cycle)
+    OpenStruct.new(:name => $1, :price => $2, :id => "#{$1} @ $#{$2}#{$3}", :billing_cycle => billing_cycle, :payments => [])
   end
 
   def str_to_anniversary(string)
@@ -101,18 +102,15 @@ end
 Given /^I have the following subscriptions:$/ do |table|
   # table is a Cucumber::Ast::Table
   strategy.current_state =  table.raw.map do |row|
-    next_billing_date = str_to_date(row[4])
+    next_billing_date = str_to_date(row[3])
+    product = str_to_product_formatting(row[0])
+    product.billing_cycle.anniversary = next_billing_date
     OpenStruct.new(
                :id => row[0],
-               :products =>  [OpenStruct.new(
-                                  :name => str_to_product_formatting(row[0]).name,
-                                  :price => str_to_product_formatting(row[0]).price, 
-                                  :billing_cycle => str_to_billing_cycle(row[1]),
-                                  :payments => []
-                                 )],
+               :products =>  [product],
                :next_payment_date =>  next_billing_date,
-               :billing_cycle => str_to_billing_cycle(row[1], next_billing_date),
-               :active_or_pending? => row[2] =~ /active/,
+               :billing_cycle => product.billing_cycle, # str_to_billing_cycle(row[1], next_billing_date),
+               :active_or_pending? => row[1] =~ /active/,
                :last_payment_refundable? => false
               )
   end
