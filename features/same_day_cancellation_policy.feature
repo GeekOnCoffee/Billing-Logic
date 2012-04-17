@@ -14,10 +14,17 @@ Feature: Same Day Cancellation Policy
     When  I change to having: <desired state>
     Then  I expect the following action: <action>
     And   I do not expect the following action: <negative action>
-    Examples: 
+    Examples: A customer that have made a payment of $30 the same day of cancellation
       | grace period | payment made                    | desired state | action                    | negative action |
+      | 24 hours     | paid $30 for A @ $30 on 3/15/12 |               | refund $30 to A @ $30 now | |
+      | 24 hours     | paid $30 for A @ $30 on 3/15/12 |               | disable A @ $30 now       | |
+
+    Examples: A customer that have made a payment just outside of the grace period by 1 second
+      | grace period | payment made                    | desired state | action                    | negative action |
+      | 24 hours     | paid $30 for A @ $30 on 3/14/12 |               | cancel A @ $30 now        | refund $30 to A @ $30 now |
+
+    Examples: A customer that made a refundable payment greater than the monthly payment
+      | grace period | payment made                    | desired state | action                    | negative action |
+
       | 24 hours     | paid $40 for A @ $30 on 3/15/12 |               | refund $40 to A @ $30 now | |
-      | 24 hours     | paid $40 for A @ $30 on 3/15/12 |               | disable A @ $30 now       | |
-      | 24 hours     | paid $40 for A @ $30 on 3/14/12 |               | refund $40 to A @ $30 now | |
-      | 24 hours     | paid $40 for A @ $30 on 3/13/12 |               | cancel A @ $30 now        | refund $40 to A @ $30 now |
 

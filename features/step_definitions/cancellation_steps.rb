@@ -13,7 +13,7 @@ And /^I made the following payment: paid (#{MONEY}) for (#{PRODUCT_FORMATTING}) 
       if product.name == str_to_product_formatting(profile_object.id).name
         profile.last_payment = OpenStruct.new(:amount => amount,
                                               :payment_date => payment_date,
-                                              :refundable? => (Time.now - payment_date.to_time).to_i <= grace_period)
+                                              :refundable? => (Time.now - payment_date.to_time).to_i < grace_period)
         def profile.last_payment_refundable?
           last_payment.refundable?
         end
