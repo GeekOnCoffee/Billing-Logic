@@ -12,7 +12,7 @@ Feature: Single Payment Strategy
     Examples:
       | added products          | action                 |
       | A @ $30/mo              | add (A @ $30/mo) @ $30/mo on 03/01/12 |
-      | A @ $30/mo, B @ $40/mo  | add (A @ $30/mo, B @ $40/mo) @ $70/mo on 03/01/12|
+      | A @ $30/mo, B @ $40/mo  | add (A @ $30/mo & B @ $40/mo) @ $70/mo on 03/01/12|
 
 #    Scenario Outline: Removing a product from your recurring payment profile
 #      Given I support Independent Payment Strategy

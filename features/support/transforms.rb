@@ -15,7 +15,7 @@ MONEY = Transform /^\$([\d\.]+)$/ do |money|
 end
 
 SINGLE_PRODUCT_REGEX = /(\w+) @ \$([\d\.]+)(\/mo|\/yr)?/
-PRODUCT_FORMATTING = Transform /^((?:\w+) @ (?:#{MONEY})(?:|\/mo|\/yr)(?:, (?:\w+) @ (?:#{MONEY})(?:|\/mo|\/yr))*)$/ do |products|
+PRODUCT_FORMATTING = Transform /^((?:\w+) @ (?:#{MONEY})(?:|\/mo|\/yr)(?:(?:, | & )(?:\w+) @ (?:#{MONEY})(?:|\/mo|\/yr))*)$/ do |products|
   products.split(/, /).map do |string|
     str_to_product_formatting(string) 
   end
