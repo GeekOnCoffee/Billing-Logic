@@ -45,7 +45,7 @@ module CommandBuilders
     class << self
       include CommandBuilders::BuilderHelpers
       def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today, :price => nil, :frequency => 1, :period => nil})
-        product_ids = products.map { |product| product.id }.join(', ')
+        product_ids = products.map { |product| product.id }.join(' & ')
         price = opts[:price] || products.inject(0){ |k, product| k += product.price.to_i; k }
         "add (#{product_ids}) @ $#{price}#{periodicity_abbrev(opts[:period])} on #{opts[:next_payment_date].strftime('%m/%d/%y')}" 
       end
