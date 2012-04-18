@@ -1,34 +1,6 @@
 module StrategyHelper
-  class WordBuilder
-    class << self
-      def create_recurring_payment_commands(products, next_payment_date = Date.today)
-        products.map do |product|
-          if product.billing_cycle.frequency == 1
-            "add #{product.id} on #{next_payment_date.strftime('%m/%d/%y')}"
-          else
-            "add #{product.id} on #{next_payment_date.strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}"
-          end
-        end
-      end
-
-      def cancel_recurring_payment_commands(*profile_ids)
-        profile_ids.map do |profile_id|
-          "cancel #{profile_id} now"
-        end
-      end
-
-      def refund_recurring_payments_command(profile_id, amount)
-        "refund $#{amount} to #{profile_id} now"
-      end
-
-      def disable_subscription(profile_id)
-        "disable #{profile_id} now"
-      end
-    end
-  end
-
-  def set_current_strategy(strategy)
-    @strategy = strategy.new(:payment_command_builder_class => WordBuilder)
+  def set_current_strategy(strategy, opts = {:command_builder => CommandBuilders::WordBuilder})
+    @strategy = strategy.new(:payment_command_builder_class => opts[:command_builder])
   end
 
   def strategy
@@ -57,15 +29,6 @@ module StrategyHelper
   end
 
   def str_to_product_formatting(string)
-    # TODO: we need to support more than just year & month
-    #             period_abbrev = case product.billing_cycle.period
-    #                         when :year; '/yr'
-    #                         when :month;'/mo'
-    #                         when :week; '/wk'
-    #                         when :day;  '/day'
-    #                         else
-    #                           product.billing_cycle.period
-    #                         end
     string =~ SINGLE_PRODUCT_REGEX
     billing_cycle = $3 ? BillingLogic::BillingCycle.new(:frequency => 1, :period => $3.include?('mo') ? :month : :year) : nil
     OpenStruct.new(:name => $1, :price => $2, :id => "#{$1} @ $#{$2}#{$3}", :billing_cycle => billing_cycle, :payments => [])
