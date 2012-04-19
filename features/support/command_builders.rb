@@ -15,12 +15,13 @@ module CommandBuilders
 
   class WordBuilder
     class << self
-      def create_recurring_payment_commands(products, next_payment_date = Date.today)
+      def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today})
         products.map do |product|
+          initial_payment_string = product.initial_payment.zero? ? '' : " with initial payment set to $#{product.initial_payment}" 
           if product.billing_cycle.frequency == 1
-            "add #{product.id} on #{next_payment_date.strftime('%m/%d/%y')}"
+            "add #{product.id} on #{opts[:next_payment_date].strftime('%m/%d/%y')}#{initial_payment_string}"
           else
-            "add #{product.id} on #{next_payment_date.strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}"
+            "add #{product.id} on #{opts[:next_payment_date].strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}#{initial_payment_string}"
           end
         end
       end
@@ -47,7 +48,9 @@ module CommandBuilders
       def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today, :price => nil, :frequency => 1, :period => nil})
         product_ids = products.map { |product| product.id }.join(' & ')
         price = opts[:price] || products.inject(0){ |k, product| k += product.price.to_i; k }
-        "add (#{product_ids}) @ $#{price}#{periodicity_abbrev(opts[:period])} on #{opts[:next_payment_date].strftime('%m/%d/%y')}" 
+        initial_payment = opts[:initial_payment] || products.map { |product| product.initial_payment || 0 }.reduce(0) { |a, e| a + e }
+        initial_payment_string = initial_payment.zero? ? '' : " with initial payment set to $#{initial_payment.to_i}"
+        "add (#{product_ids}) @ $#{price}#{periodicity_abbrev(opts[:period])} on #{opts[:next_payment_date].strftime('%m/%d/%y')}#{initial_payment_string}"
       end
 
       def cancel_recurring_payment_commands(*profile_ids)
