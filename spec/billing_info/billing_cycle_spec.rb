@@ -1,15 +1,14 @@
 require 'spec_helper'
 
 describe BillingLogic::BillingCycle do
-  include BillingLogic
   context "a billing cycle" do
     before do 
-      @cycle_45_days      = BillingCycle.new(:period => :day,       :frequency => 45)
-      @one_day_cycle      = BillingCycle.new(:period => :day,       :frequency => 1)
-      @one_week_cycle     = BillingCycle.new(:period => :week,      :frequency => 1)
-      @semimonth_cycle    = BillingCycle.new(:period => :semimonth, :frequency => 1)
-      @one_month_cycle    = BillingCycle.new(:period => :month,     :frequency => 1)
-      @one_year_cycle     = BillingCycle.new(:period => :year,      :frequency => 1)
+      @cycle_45_days      = BillingLogic::BillingCycle.new(:period => :day,       :frequency => 45)
+      @one_day_cycle      = BillingLogic::BillingCycle.new(:period => :day,       :frequency => 1)
+      @one_week_cycle     = BillingLogic::BillingCycle.new(:period => :week,      :frequency => 1)
+      @semimonth_cycle    = BillingLogic::BillingCycle.new(:period => :semimonth, :frequency => 1)
+      @one_month_cycle    = BillingLogic::BillingCycle.new(:period => :month,     :frequency => 1)
+      @one_year_cycle     = BillingLogic::BillingCycle.new(:period => :year,      :frequency => 1)
     end
 
     it "should know about its period type" do
