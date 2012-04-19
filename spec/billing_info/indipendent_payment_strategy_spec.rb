@@ -117,7 +117,7 @@ module BillingLogic
         end
 
         it "should call create_recurring_payment_command with 1 product on the command builder object" do
-          strategy.payment_command_builder_class.should_receive(:create_recurring_payment_commands).with([product_a], Date.today).once
+          strategy.payment_command_builder_class.should_receive(:create_recurring_payment_commands).with([product_a], :next_payment_date => Date.today).once
           strategy.command_list
         end
 
@@ -157,7 +157,7 @@ module BillingLogic
         end
 
         it "should create a new profile with the remaining product at the end of of the current billing cycle" do
-          strategy_with_3_current_products.should_receive(:create_recurring_payment_command).with([product_b], profile_a.next_payment_date).once
+          strategy_with_3_current_products.should_receive(:create_recurring_payment_command).with([product_b], hash_including(:next_payment_date => profile_a.next_payment_date)).once
           strategy_with_3_current_products.command_list
         end
       end
@@ -171,7 +171,7 @@ module BillingLogic
         it "should add monthly plan at the end of the year when switching to monthly cycle" do
           product_a.stub(:billing_cycle) { monthly_cycle }
           strategy.desired_state = [product_a]
-          strategy.should_receive(:create_recurring_payment_command).with([product_a], profile_a.next_payment_date).once
+          strategy.should_receive(:create_recurring_payment_command).with([product_a], hash_including(:next_payment_date => profile_a.next_payment_date)).once
           strategy.should_receive(:cancel_recurring_payment_command).with(profile_a.id).once
           strategy.command_list
         end
@@ -188,7 +188,7 @@ module BillingLogic
           end
 
           it "should re-add the cancelled product at the end of the year" do
-            strategy.should_receive(:create_recurring_payment_command).with([product_a], Date.today >> 12).once
+            strategy.should_receive(:create_recurring_payment_command).with([product_a], :next_payment_date => Date.today >> 12).once
             strategy.command_list
           end
         end
@@ -201,7 +201,7 @@ module BillingLogic
         context "when re-adding the cancelled product" do
           it "should add it to the end of the cancelled period" do
             strategy.desired_state = [product_d]
-            strategy.should_receive(:create_recurring_payment_command).with([product_d], canceled_profile_d.next_payment_date).once
+            strategy.should_receive(:create_recurring_payment_command).with([product_d], :next_payment_date => canceled_profile_d.next_payment_date).once
             strategy.command_list
           end
         end
@@ -216,7 +216,7 @@ module BillingLogic
         context "when re-adding the cancelled product" do
           it "should add it to the end of the cancelled period" do
             strategy.desired_state = [product_d]
-            strategy.should_receive(:create_recurring_payment_command).with([product_d], canceled_profile_d.next_payment_date).once
+            strategy.should_receive(:create_recurring_payment_command).with([product_d], :next_payment_date => canceled_profile_d.next_payment_date).once
             strategy.command_list
           end
         end

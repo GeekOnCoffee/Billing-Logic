@@ -1,32 +1,30 @@
 module BillingLogic
-  class SinglePaymentStrategy < IndependentPaymentStrategy
-
-    def refund_recurring_payments_command(profile_id, amount)
-      payment_command_builder_class.refund_recurring_payments_command(profile_id, amount)
-    end
-
-    def disable_subscription(profile_id)
-      payment_command_builder_class.disable_subscription(profile_id)
-    end
-
-    # these messages seems like they should be pluggable
-    def cancel_recurring_payment_command(profile_id)
-      payment_command_builder_class.cancel_recurring_payment_commands(profile_id)
-    end
+  class SinglePaymentStrategy < BaseStrategy
 
     def add_commands_for_products_to_be_added
       unless products_to_be_added.empty?
-        products_to_be_added.each do |group_of_product, date|
-          @command_list << create_recurring_payment_command(group_of_product, date)
+        products_to_be_added.each do |group_of_products, date|
+          @command_list << create_recurring_payment_command(group_of_products, 
+                                                            :next_payment_date => date,
+                                                            :period => extract_period_from_product_list(group_of_products))
         end
       end
     end
 
-    def create_recurring_payment_command(products, next_payment_date = Date.today)
-      payment_command_builder_class.
-        create_recurring_payment_commands(products,
-                                          :next_payment_date => next_payment_date, 
-                                          :period => products.first.billing_cycle.period)
+    def proration_for_product(product)
+      ProrationCalculator.new(:billing_cycle => product.billing_cycle,
+                              :price => product.price,
+                              :date   => today + 1 ).prorate
+    end
+
+    def next_payment_date_from_product(product, previous_product)
+      if previous_product.billing_cycle.periodicity < product.billing_cycle.periodicity
+        product.initial_payment = product.price - proration_for_product(previous_product)
+        product.billing_cycle.anniversary = today
+        product.billing_cycle.closest_anniversary_date_including(today)
+      else
+        next_payment_date_from_profile_with_product(product, :active => true)
+      end
     end
 
   end
