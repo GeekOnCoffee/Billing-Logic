@@ -100,11 +100,11 @@ module BillingLogic
     end
 
     def inactive_products
-      current_products(active: false)
+      current_products(:active => false)
     end
 
     def current_active_or_pending_products
-      current_products(active: true)
+      current_products(:active => true)
     end
 
     # this should be part of a separate strategy object
