@@ -53,7 +53,7 @@ module BillingLogic
         group[date] ||= []
         group[date] << product
       end
-      group.map { |k, v| group.assoc(k).reverse } 
+      group.map { |k, v| [v, k] } 
     end
 
     def previously_cancelled_product?(product)
