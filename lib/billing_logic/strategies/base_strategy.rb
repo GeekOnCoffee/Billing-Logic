@@ -1,5 +1,5 @@
 module BillingLogic
-  class IndependentPaymentStrategy
+  class BaseStrategy
     attr_accessor :desired_state, :current_state, :payment_command_builder_class
     def initialize(opts = {})
       self.current_state = opts.delete(:current_state) || []
@@ -18,7 +18,7 @@ module BillingLogic
     end
 
     def removed_obsolete_subscriptions(subscriptions)
-      subscriptions.reject{|sub| sub.next_payment_date < Date.today }
+      subscriptions.reject{|sub| sub.next_payment_date < today }
     end
 
     def calculate_list
@@ -28,21 +28,13 @@ module BillingLogic
     end
 
     def add_commands_for_products_to_be_added
-      unless products_to_be_added.empty?
-        products_to_be_added.each do |group_of_product, date|
-          group_of_product.each do |product|
-            @command_list << create_recurring_payment_command([product], date)
-          end
-        end
-      end
     end
 
     # Question:
     # Should the method return a data structure or an object?
     def products_to_be_added
-      new_products = desired_state.reject do |el|
-        current_active_or_pending_products.map{|el| el.name}.include?(el.name) &&
-          el.billing_cycle.periodicity  == current_active_or_pending_products.detect{|cael| cael.name == el.name}.billing_cycle.periodicity
+      new_products = desired_state.reject do |product|
+        ProductComparator.new(product).in_like?(current_active_or_pending_products)
       end
       group_by_date(new_products)
     end
@@ -51,25 +43,41 @@ module BillingLogic
     def group_by_date(new_products)
       group = {}
       new_products.each do |product|
-        if inactive_products.map{|prod| prod.name}.include?(product.name)
-          date = next_payment_date_from_profile_with_product(product)
-        elsif current_active_or_pending_products.map{|prod2| prod2.name}.include?(product.name)
-          date = next_payment_date_from_profile_with_product(product, :active => true)
+        if previously_cancelled_product?(product)
+          date = next_payment_date_from_profile_with_product(product, :active => false)
+        elsif previous_product = changed_product_subscription?(product)
+          date = next_payment_date_from_product(product, previous_product)
         else
           date = today
         end
         group[date] ||= []
         group[date] << product
       end
-      group.map { |k, v| group.assoc(k).reverse } 
+      group.map { |k, v| [v, k] } 
+    end
+
+    def previously_cancelled_product?(product)
+      inactive_products.detect do |inactive_product| 
+        ProductComparator.new(inactive_product).same_class?(product) 
+      end
+    end
+
+    def changed_product_subscription?(product)
+      products_to_be_removed.detect do |removed_product|
+        ProductComparator.new(removed_product).same_class?(product) 
+      end
     end
 
     def next_payment_date_from_profile_with_product(product, opts = {:active => false})
-      profiles_by_status(opts[:active]).select do |profile| 
-        profile.products.map{|product| product.name}.include?(product.name)
-      end.map do |profile| 
-        profile.next_payment_date 
-      end.sort.first
+      profiles_by_status(opts[:active]).map do |profile|
+        profile.next_payment_date if ProductComparator.new(product).in_class_of?(profile.products)
+      end.compact.max
+    end
+
+    def next_payment_date_from_product(product, previous_product)
+      product.initial_payment = product.price
+      product.billing_cycle.anniversary = next_payment_date_from_profile_with_product(product, :active => true) #previous_product.billing_cycle.next_payment_date
+      product.billing_cycle.closest_anniversary_date_including(product.billing_cycle.anniversary)
     end
 
     # for easy stubbing/subclassing/replacement
@@ -78,7 +86,9 @@ module BillingLogic
     end
 
     def products_to_be_removed
-      current_active_or_pending_products - desired_state
+      current_active_or_pending_products.reject do |product|
+        ProductComparator.new(product).included?(desired_state)
+      end
     end
 
     def current_products(opts = {})
@@ -90,15 +100,16 @@ module BillingLogic
     end
 
     def inactive_products
-      current_products(active: false)
+      current_products(:active => false)
     end
 
     def current_active_or_pending_products
-      current_products(active: true)
+      current_products(:active => true)
     end
 
     # this should be part of a separate strategy object
     def add_commands_for_products_to_be_removed
+      # puts "\n ### \n #{current_state} \n\####"
       current_state.each do |profile|
         # We need to issue refunds before cancelling profiles
         @command_list << issue_refunds_if_necessary(profile)
@@ -109,9 +120,14 @@ module BillingLogic
           # do nothing
         else  # only some products are being removed and the profile needs to be updated
           @command_list << cancel_recurring_payment_command(profile.id)
-          @command_list << create_recurring_payment_command(remaining_products, profile.next_payment_date)
+          @command_list << create_recurring_payment_command(remaining_products, :next_payment_date => profile.next_payment_date,
+                                                           :period => extract_period_from_product_list(remaining_products))
         end
       end
+    end
+
+    def extract_period_from_product_list(products)
+      products.first.billing_cycle.period
     end
 
     def remove_products_from_profile(profile)
@@ -142,14 +158,53 @@ module BillingLogic
       payment_command_builder_class.cancel_recurring_payment_commands(profile_id)
     end
 
-    def create_recurring_payment_command(products, next_payment_date = Date.today)
-      payment_command_builder_class.create_recurring_payment_commands(products, next_payment_date)
+    def create_recurring_payment_command(products, opts = {:next_payment_date => Date.today})
+      payment_command_builder_class.create_recurring_payment_commands(products, opts)
     end
 
     def reset_command_list
       @command_list.clear
     end
 
+    class ProductComparator
+      extend Forwardable
+      def_delegators :@product, :name, :price, :billing_cycle
+      def initialize(product)
+        @product = product
+      end
+
+      def included?(product_list)
+        product_list.any? { |product| ProductComparator.new(product).similar?(self) }
+      end
+
+      def in_class_of?(product_list)
+        product_list.any? { |product| ProductComparator.new(product).same_class?(self) }
+      end
+
+      def in_like?(product_list)
+        product_list.any? { |product| ProductComparator.new(product).like?(self) }
+      end
+
+      def like?(other_product)
+        similar?(other_product) && same_periodicity?(other_product)
+      end
+
+      def similar?(other_product)
+        same_class?(other_product) &&  same_price?(other_product)
+      end
+
+      def same_periodicity?(other_product)
+        @product.billing_cycle.periodicity == other_product.billing_cycle.periodicity
+      end
+
+      def same_class?(other_product)
+        @product.name == other_product.name
+      end
+
+      def same_price?(other_product)
+        @product.price == other_product.price
+      end
+    end
+
   end
 end
-

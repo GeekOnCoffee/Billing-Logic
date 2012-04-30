@@ -2,19 +2,19 @@ require 'spec_helper'
 module BillingLogic
   describe PaymentCommandBuilder do
     let(:monthly_cycle) do
-          BillingCycle.new(period: :month, 
-                           frequency: 1,
-                           anniversary: Date.today - 7)
+          BillingCycle.new(:period => :month, 
+                           :frequency => 1,
+                           :anniversary => Date.today - 7)
     end
 
     let(:yearly_cycle) do
-      BillingCycle.new(period: :year, 
-                       frequency: 1,
-                       anniversary: Date.today - 7)
+      BillingCycle.new(:period => :year, 
+                       :frequency => 1,
+                       :anniversary => Date.today - 7)
     end
-    let(:product_a) { mock('Product A', name: 'A', price: 10, billing_cycle: monthly_cycle) }
-    let(:product_b) { mock('Product B', name: 'B', price: 10, billing_cycle: monthly_cycle) }
-    let(:yearly_product) { mock('Product Yearly', name: 'Yearly', price: 10, billing_cycle: yearly_cycle) }
+    let(:product_a) { mock('Product A', :name => 'A', :price => 10, :billing_cycle => monthly_cycle) }
+    let(:product_b) { mock('Product B', :name => 'B', :price => 10, :billing_cycle => monthly_cycle) }
+    let(:yearly_product) { mock('Product Yearly', :name => 'Yearly', :price => 10, :billing_cycle => yearly_cycle) }
 
     describe "#group_products_by_billing_cycle" do
       context "when 1 billing cycle is present" do

@@ -2,11 +2,11 @@ module BillingLogic
   class BillingCycle
     include Comparable
     attr_accessor :period, :frequency, :anniversary
-    TIME_UNITS = {day: 1, week: 7, month: 365/12.0, semimonth: 365/24, year: 365}
+    TIME_UNITS = { :day => 1, :week => 7, :month => 365/12.0, :semimonth=> 365/24, :year => 365 }
 
     def initialize(opts = {})
       self.period = opts[:period]
-      self.frequency = opts[:frequency]
+      self.frequency = opts[:frequency] || 1
       self.anniversary = opts[:anniversary]
     end
 
@@ -25,12 +25,7 @@ module BillingLogic
     def next_payment_date
       closest_anniversary_date_including(Date.today)
     end
-
-    private
-    def time_unit_measure
-      TIME_UNITS[self.period]
-    end
-
+    
     def closest_anniversary_date_including(date) 
       date_in_past = date < anniversary
       operators =   {:month => date_in_past ? :<< : :>>, 
@@ -44,5 +39,11 @@ module BillingLogic
         anniversary.send(operators[:month], (self.frequency * 12))
       end
     end
+
+    private
+    def time_unit_measure
+      TIME_UNITS[self.period]
+    end
+
   end
 end

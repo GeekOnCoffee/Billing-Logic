@@ -3,75 +3,113 @@ BillingAccount
 Product
 Subscription
 
-== BillingLogic::Account
-All calls supports hooks callback for :success, :failure, :error
-
-account = Account.new
-account.add Product.new
-account << Subscription.new, :success => lambda{ … something … }, :failure => …, :error => …
-account.migrate sub1, :to => sub2, :success => lambda{ … something … }
-account.remove product1
-account.remove subscription
-account.cancel subscription
-account.suspend!
-
-== Subscription
-fields:
-  balance
-  plan_id
-  price
-  status
-  trial_duration
-  trial_duration_unit
-  trial_period
-
-Class methods
-  new
-  create
-  update
-  cancel
-  find
 
 
-subscription = Subscription#new or Subscription#create
-subscription.renew
-subscription.cancel
-subscription.activate!
-subscription.deactivate!
-subscription.status #=> pending, active, expired, cancelled, past_due
-subscription.balance
+== BillingLogic::Strategies
+There currently 2 strategies available: IndependentPaymentStrategy & SinglePaymentStrategy
 
-Subscription.cancel(id)
+    strategy = <strategy class>.new(:payment_command_builder_class => <your builder class>,
+    				:current_state => <an array of payment profiles>
+    				:desired_state => <an array of products>)
+    
+    strategy.command_list => An Array of commands provided by the command builder class
 
-== Product
-product = Product.new
-product.amount = 19.00
+== BillingLogic::PaymentProfile
+A PaymentProfile must have the following fields
+  :id 				# a unique identifier
+  :products 			# An array of products
+  :next_payment_date 		# DateTime of the next due payment
+  :billing_cycle 		# A BillingLogic::BillingCycle
+  :active_or_pending? 		# Is this a current, not cancelled nor suspended profile
+  :last_payment_refundable? 	# Is the last payment made refundable
+  :last_refundable_payment	# The amount of the last payment that is refundable
 
-== Plan
-fields:
-  plan id
-  plan name
-  description
-  trial period => true/false
-  billing day of month
-  number of billing cycles
-  amount
-  currency
-  billing cycle
+== BillingLogic::Product
+A product must provide the following fields
+  :id 		      # a unique identifier
+  :name 	      # a class of product identifier
+  :price 	      # the common price for this object
+  :billing_cycle      # A Billing Cycle like object
+  :payments           # an array of payments made if applicable
+  :initial_amount     # The amount of an optional initial payment if applicable
+  :billing_start_date # This will be used for special cases when we don't want to start the billing immediatly
+
+  facility methods
+    renewal_month
+    renewal_day
+    interval
+    start_on
+    expires_on
+
+== BillingLogic::BillingCycle
+fields: 
+  :frequency
+  :period
+  :anniversary
+
+methods
+  days_in_billing_cycle_including(date)
+  next_payment_date
+  closest_anniversary_date_including(date)
 
 
-== Addons/Discounts
-id
-name
-descripion
-amount
-duration
-number_of_billing_cycles
-quantity
-never_expires
-
-== 
-
-
-
-
+# == Subscription
+# fields:
+#   balance
+#   plan_id
+#   price
+#   status
+#   trial_duration
+#   trial_duration_unit
+#   trial_period
+# 
+# Class methods
+#   new
+#   create
+#   update
+#   cancel
+#   find
+# 
+# 
+# subscription = Subscription#new or Subscription#create
+# subscription.renew
+# subscription.cancel
+# subscription.activate!
+# subscription.deactivate!
+# subscription.status #=> pending, active, expired, cancelled, past_due
+# subscription.balance
+# 
+# Subscription.cancel(id)
+# 
+# == Product
+# product = Product.new
+# product.amount = 19.00
+# 
+# == Plan
+# fields:
+#   plan id
+#   plan name
+#   description
+#   trial period => true/false
+#   billing day of month
+#   number of billing cycles
+#   amount
+#   currency
+#   billing cycle
+# 
+# 
+# == Addons/Discounts
+# id
+# name
+# descripion
+# amount
+# duration
+# number_of_billing_cycles
+# quantity
+# never_expires
+# 
+# == 
+# 
+# 
+# 
+# 

@@ -14,6 +14,8 @@ task :ci => [:spec, :cucumber]
 
 desc 'Run integration test'
 Cucumber::Rake::Task.new do |t|
-  output = ENV['CC_BUILD_ARTIFACTS'] || "./log"
-  t.cucumber_opts = ["--format html --out #{output}/cukes.html", "-f pretty"]
+  unless ENV['TRAVIS_RUBY_VERSION']
+    output = ENV['CC_BUILD_ARTIFACTS'] || "./log"
+    t.cucumber_opts = ["--format html --out #{output}/cukes.html", "-f pretty"]
+  end
 end
