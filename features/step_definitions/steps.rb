@@ -95,7 +95,8 @@ When /^I change to having: (nothing|.*)$/ do |products|
 
 end
 
-Then /^(?:|I )(#{ASSERTION})expect the following action: ((?:add|cancel|disable|refund \$\d+ to) #{PRODUCT_FORMATTING} (?:on #{DATE}|now).*)$/ do |assertion, commands|
+# Then /^(?:|I )(#{ASSERTION})expect the following action: ((?:add|cancel|disable|refund \$\d+ to) #{PRODUCT_FORMATTING} (?:on #{DATE}|now).*)$/ do |assertion, commands|
+Then /^(?:|I )(#{ASSERTION})expect the following action: ((?:remove|add|cancel|disable|refund \$\d+ to) .*)$/ do |assertion, commands|
   commands.split(/, /).each do |command|
     command_list_should_include(command, assertion)
   end

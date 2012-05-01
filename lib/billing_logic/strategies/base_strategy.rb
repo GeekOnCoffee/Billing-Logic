@@ -119,9 +119,16 @@ module BillingLogic
         elsif remaining_products.size == profile.products.size # nothing has changed
           # do nothing
         else  # only some products are being removed and the profile needs to be updated
-          @command_list << cancel_recurring_payment_command(profile.id)
-          @command_list << create_recurring_payment_command(remaining_products, :next_payment_date => profile.next_payment_date,
-                                                           :period => extract_period_from_product_list(remaining_products))
+          if profile.products.size > 1
+            @command_list << remove_product_from_payment_profile(profile.id,
+                                                                removed_products_from_profile(profile))
+          else
+
+            @command_list << cancel_recurring_payment_command(profile.id)
+            @command_list << create_recurring_payment_command(remaining_products, 
+                                                            :next_payment_date => profile.next_payment_date,
+                                                            :period => extract_period_from_product_list(remaining_products))
+          end
         end
       end
     end
@@ -132,6 +139,10 @@ module BillingLogic
 
     def remove_products_from_profile(profile)
       profile.products.reject { |product| products_to_be_removed.include?(product) }
+    end
+
+    def removed_products_from_profile(profile)
+      profile.products.select { |product| products_to_be_removed.include?(product) }
     end
 
     def issue_refunds_if_necessary(profile)
@@ -156,6 +167,10 @@ module BillingLogic
     # these messages seems like they should be pluggable
     def cancel_recurring_payment_command(profile_id)
       payment_command_builder_class.cancel_recurring_payment_commands(profile_id)
+    end
+
+    def remove_product_from_payment_profile(profile_id, removed_products)
+      payment_command_builder_class.remove_product_from_payment_profile(profile_id, removed_products)
     end
 
     def create_recurring_payment_command(products, opts = {:next_payment_date => Date.today})

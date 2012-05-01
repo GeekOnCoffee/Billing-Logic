@@ -12,8 +12,33 @@ module CommandBuilders
       end
     end
   end
+  class BasicBuilder
+    class << self
+      def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today})
+        raise Exception.new('Implement me')
+      end
 
-  class WordBuilder
+      def cancel_recurring_payment_commands(*profile_ids)
+        profile_ids.map do |profile_id|
+          "cancel #{profile_id} now"
+        end
+      end
+
+      def refund_recurring_payments_command(profile_id, amount)
+        "refund $#{amount} to #{profile_id} now"
+      end
+
+      def disable_subscription(profile_id)
+        "disable #{profile_id} now"
+      end
+
+      def remove_product_from_payment_profile(profile_id, products)
+        "remove #{products.map { |product| product.id }.join(" & ")} from #{profile_id} now"
+      end
+    end
+  end
+
+  class WordBuilder < BasicBuilder
     class << self
       def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today})
         products.map do |product|
@@ -25,24 +50,10 @@ module CommandBuilders
           end
         end
       end
-
-      def cancel_recurring_payment_commands(*profile_ids)
-        profile_ids.map do |profile_id|
-          "cancel #{profile_id} now"
-        end
-      end
-
-      def refund_recurring_payments_command(profile_id, amount)
-        "refund $#{amount} to #{profile_id} now"
-      end
-
-      def disable_subscription(profile_id)
-        "disable #{profile_id} now"
-      end
     end
   end
 
-  class AggregateWordBuilder
+  class AggregateWordBuilder < BasicBuilder
     class << self
       include CommandBuilders::BuilderHelpers
       def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today, :price => nil, :frequency => 1, :period => nil})
@@ -51,20 +62,6 @@ module CommandBuilders
         initial_payment = opts[:initial_payment] || products.map { |product| product.initial_payment || 0 }.reduce(0) { |a, e| a + e }
         initial_payment_string = initial_payment.zero? ? '' : " with initial payment set to $#{initial_payment.to_i}"
         "add (#{product_ids}) @ $#{price}#{periodicity_abbrev(opts[:period])} on #{opts[:next_payment_date].strftime('%m/%d/%y')}#{initial_payment_string}"
-      end
-
-      def cancel_recurring_payment_commands(*profile_ids)
-        profile_ids.map do |profile_id|
-          "cancel #{profile_id} now"
-        end
-      end
-
-      def refund_recurring_payments_command(profile_id, amount)
-        "refund $#{amount} to #{profile_id} now"
-      end
-
-      def disable_subscription(profile_id)
-        "disable #{profile_id} now"
       end
     end
   end
