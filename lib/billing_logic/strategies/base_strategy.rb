@@ -147,9 +147,9 @@ module BillingLogic
 
     def issue_refunds_if_necessary(profile)
       ret = []
-      profile.products.find_all{ |product| products_to_be_removed.include?(product) }.map do |refunded_product|
-        if profile.last_payment_refundable?
-          ret << refund_recurring_payments_command(profile.id, profile.last_payment_amount)
+      removed_products_from_profile(profile).map do |removed_product|
+        unless profile.refundable_payment_amount(removed_product).zero?
+          ret << refund_recurring_payments_command(profile.id, profile.refundable_payment_amount(*removed_product))
           ret << disable_subscription(profile.id)
         end
       end

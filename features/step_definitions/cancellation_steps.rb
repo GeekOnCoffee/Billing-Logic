@@ -11,16 +11,14 @@ And /^I made the following payment: paid (#{MONEY}) for (#{PRODUCT_FORMATTING}) 
   strategy.current_state.each do |profile|
     profile.products.each do |product|
       if product.name == profile_object.first.name
-        profile.last_payment = OpenStruct.new(:amount => amount,
+        profile.last_payment = OpenStruct.new(:amount => amount.to_i,
                                               :payment_date => payment_date,
                                               :refundable? => (Time.now - payment_date.to_time).to_i < grace_period)
-        def profile.last_payment_refundable?
-          last_payment.refundable?
+
+        def profile.refundable_payment_amount(foo)
+          last_payment.refundable? ? last_payment.amount : 0.0
         end
 
-        def profile.last_payment_amount
-          last_payment.amount
-        end
       end
     end
   end
