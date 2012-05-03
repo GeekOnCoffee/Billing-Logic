@@ -1,5 +1,5 @@
 module StrategyHelper
-  def set_current_strategy(strategy, opts = {:command_builder => CommandBuilders::WordBuilder})
+  def set_current_strategy(strategy, opts = {:command_builder => BillingLogic::CommandBuilders::WordBuilder})
     @strategy = strategy.new(:payment_command_builder_class => opts[:command_builder])
   end
 
