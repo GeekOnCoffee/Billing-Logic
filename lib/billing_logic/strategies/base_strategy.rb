@@ -210,6 +210,14 @@ module BillingLogic::Strategies
       payment_command_builder_class.create_recurring_payment_commands(products, opts)
     end
 
+    def with_products_to_be_added(&block)
+      unless (products_to_be_added = products_to_be_added_grouped_by_date).empty?
+        products_to_be_added.each do |group_of_products, date|
+          yield(group_of_products, date)
+        end
+      end
+    end
+
     class ProductComparator
       extend Forwardable
       def_delegators :@product, :name, :price, :billing_cycle
