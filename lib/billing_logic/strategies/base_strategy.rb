@@ -1,11 +1,18 @@
-module BillingLogic
+require 'forwardable'
+module BillingLogic::Strategies
   class BaseStrategy
-    attr_accessor :desired_state, :current_state, :payment_command_builder_class
+
+    attr_accessor :desired_state, :current_state, :payment_command_builder_class, :default_command_builder
+
     def initialize(opts = {})
       self.current_state = opts.delete(:current_state) || []
       @desired_state = opts.delete(:desired_state) || []
       @command_list = []
-      @payment_command_builder_class = opts.delete(:payment_command_builder_class) || PaymentCommandBuilder
+      @payment_command_builder_class = opts.delete(:payment_command_builder_class) || default_command_builder
+    end
+
+    def default_command_builder
+      BillingLogic::CommandBuilders::BasicBuilder
     end
 
     def command_list
@@ -45,7 +52,7 @@ module BillingLogic
       new_products.each do |product|
         if previously_cancelled_product?(product)
           date = next_payment_date_from_profile_with_product(product, :active => false)
-        elsif previous_product = changed_product_subscription?(product)
+        elsif (previous_product = changed_product_subscription?(product))
           date = next_payment_date_from_product(product, previous_product)
         else
           date = today
@@ -75,9 +82,21 @@ module BillingLogic
     end
 
     def next_payment_date_from_product(product, previous_product)
-      product.initial_payment = product.price
-      product.billing_cycle.anniversary = next_payment_date_from_profile_with_product(product, :active => true) #previous_product.billing_cycle.next_payment_date
-      product.billing_cycle.closest_anniversary_date_including(product.billing_cycle.anniversary)
+      if product.billing_cycle.periodicity > previous_product.billing_cycle.periodicity
+
+        # puts 
+        product.initial_payment = product.price
+        product.billing_cycle.anniversary = previous_product.billing_cycle.anniversary
+        #puts "product          #{product.id} #{product.billing_cycle.anniversary} #{product.billing_cycle.next_payment_date}"
+        #puts "previous_product #{previous_product.id} #{previous_product.billing_cycle.anniversary} #{previous_product.billing_cycle.next_payment_date}"
+
+        product.billing_cycle.next_payment_date # closest_future_anniversary_date_including(product.billing_cycle.anniversary)
+      else
+        product.billing_cycle.anniversary = next_payment_date_from_profile_with_product(product, :active => true) 
+      end
+      #previous_product.billing_cycle.next_payment_date
+      # product.billing_cycle.closest_anniversary_date_including(product.billing_cycle.anniversary)
+
     end
 
     # for easy stubbing/subclassing/replacement
@@ -109,25 +128,32 @@ module BillingLogic
 
     # this should be part of a separate strategy object
     def add_commands_for_products_to_be_removed
-      # puts "\n ### \n #{current_state} \n\####"
       current_state.each do |profile|
+
         # We need to issue refunds before cancelling profiles
         @command_list << issue_refunds_if_necessary(profile)
         remaining_products = remove_products_from_profile(profile)
+
         if remaining_products.empty? # all products in payment profile needs to be removed
+
           @command_list << cancel_recurring_payment_command(profile.id)
+
         elsif remaining_products.size == profile.products.size # nothing has changed
+          #
           # do nothing
+          #
         else  # only some products are being removed and the profile needs to be updated
-          if profile.products.size > 1
+
+          if remaining_products.size >= 1
+
             @command_list << remove_product_from_payment_profile(profile.id,
-                                                                removed_products_from_profile(profile))
+                                                                 removed_products_from_profile(profile))
           else
 
             @command_list << cancel_recurring_payment_command(profile.id)
             @command_list << create_recurring_payment_command(remaining_products, 
-                                                            :next_payment_date => profile.next_payment_date,
-                                                            :period => extract_period_from_product_list(remaining_products))
+                                                              :next_payment_date => profile.next_payment_date,
+                                                              :period => extract_period_from_product_list(remaining_products))
           end
         end
       end

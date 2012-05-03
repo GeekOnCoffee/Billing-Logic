@@ -12,3 +12,36 @@ RSpec.configure do |config|
   config.color_enabled = true
   config.formatter = 'documentation'
 end
+
+class MockProduct
+  include BillingLogic::CommandBuilders::BuilderHelpers
+
+  attr_accessor :id, :name, :price, :billing_cycle, :initial_payment
+  def initialize(opts ={})
+    opts.each do |k, v|
+      self.send("#{k}=", v)
+    end
+  end
+
+  def id
+    "#{@id} @ $#{price}#{periodicity_abbrev(billing_cycle.period)}"
+  end
+end
+
+class MockProfile
+  attr_accessor :id, :products, :price, :next_payment_date, :billing_cycle, :active_or_pending
+  def initialize(opts ={})
+    opts.each do |k, v|
+      self.send("#{k}=", v)
+    end
+  end
+
+  def active_or_pending?
+    active_or_pending
+  end
+
+  def refundable_payment_amount(foo)
+    0.0
+  end
+
+end

@@ -1,6 +1,10 @@
-module BillingLogic
+module BillingLogic::Strategies
   class IndependentPaymentStrategy < BaseStrategy
-    
+
+    def default_command_builder
+      BillingLogic::CommandBuilders::WordBuilder
+    end
+
     def add_commands_for_products_to_be_added
       unless products_to_be_added.empty?
         products_to_be_added.each do |group_of_products, date|

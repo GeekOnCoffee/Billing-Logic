@@ -1,5 +1,10 @@
-module BillingLogic
+module BillingLogic::Strategies
+
   class SinglePaymentStrategy < BaseStrategy
+
+    def default_command_builder
+      BillingLogic::CommandBuilders::AggregateWordBuilder
+    end
 
     def add_commands_for_products_to_be_added
       unless products_to_be_added.empty?
@@ -12,7 +17,7 @@ module BillingLogic
     end
 
     def proration_for_product(product)
-      ProrationCalculator.new(:billing_cycle => product.billing_cycle,
+      BillingLogic::ProrationCalculator.new(:billing_cycle => product.billing_cycle,
                               :price => product.price,
                               :date   => today + 1 ).prorate
     end
@@ -21,7 +26,7 @@ module BillingLogic
       if previous_product.billing_cycle.periodicity < product.billing_cycle.periodicity
         product.initial_payment = product.price - proration_for_product(previous_product)
         product.billing_cycle.anniversary = today
-        product.billing_cycle.closest_anniversary_date_including(today)
+        product.billing_cycle.next_payment_date
       else
         next_payment_date_from_profile_with_product(product, :active => true)
       end

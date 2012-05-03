@@ -58,7 +58,7 @@ end
 World(StrategyHelper)
 
 Given /^I support Independent Payment Strategy$/ do
-  set_current_strategy(BillingLogic::IndependentPaymentStrategy)
+  set_current_strategy(BillingLogic::Strategies::IndependentPaymentStrategy)
 end
 
 Given /^I don't have any subscriptions$/ do
