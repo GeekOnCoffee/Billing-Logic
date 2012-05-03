@@ -22,10 +22,15 @@ module BillingLogic::Strategies
                                             :date   => today + 1 ).prorate
     end
 
-    def next_payment_date_from_product(product, previous_product)
-      if previous_product.billing_cycle.periodicity < product.billing_cycle.periodicity
+    def update_product_billing_cycle_and_payment!(product, previous_product)
+      if product.billing_cycle.periodicity > previous_product.billing_cycle.periodicity
         product.initial_payment = product.price - proration_for_product(previous_product)
         product.billing_cycle.anniversary = today
+      end
+    end
+
+    def next_payment_date_from_product(product, previous_product)
+      if product.billing_cycle.periodicity > previous_product.billing_cycle.periodicity
         product.billing_cycle.next_payment_date
       else
         next_payment_date_from_profile_with_product(product, :active => true)
