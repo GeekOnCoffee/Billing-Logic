@@ -83,20 +83,12 @@ module BillingLogic::Strategies
 
     def next_payment_date_from_product(product, previous_product)
       if product.billing_cycle.periodicity > previous_product.billing_cycle.periodicity
-
-        # puts 
         product.initial_payment = product.price
         product.billing_cycle.anniversary = previous_product.billing_cycle.anniversary
-        #puts "product          #{product.id} #{product.billing_cycle.anniversary} #{product.billing_cycle.next_payment_date}"
-        #puts "previous_product #{previous_product.id} #{previous_product.billing_cycle.anniversary} #{previous_product.billing_cycle.next_payment_date}"
-
-        product.billing_cycle.next_payment_date # closest_future_anniversary_date_including(product.billing_cycle.anniversary)
+        product.billing_cycle.next_payment_date
       else
         product.billing_cycle.anniversary = next_payment_date_from_profile_with_product(product, :active => true) 
       end
-      #previous_product.billing_cycle.next_payment_date
-      # product.billing_cycle.closest_anniversary_date_including(product.billing_cycle.anniversary)
-
     end
 
     # for easy stubbing/subclassing/replacement

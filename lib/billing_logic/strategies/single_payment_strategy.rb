@@ -18,8 +18,8 @@ module BillingLogic::Strategies
 
     def proration_for_product(product)
       BillingLogic::ProrationCalculator.new(:billing_cycle => product.billing_cycle,
-                              :price => product.price,
-                              :date   => today + 1 ).prorate
+                                            :price => product.price,
+                                            :date   => today + 1 ).prorate
     end
 
     def next_payment_date_from_product(product, previous_product)
