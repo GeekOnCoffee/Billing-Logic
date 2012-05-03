@@ -78,7 +78,15 @@ module BillingLogic
       it "should return products that are not in the current state" do
         strategy.current_state = []
         strategy.desired_state = [product_a]
-        strategy.products_to_be_added.should == [[[product_a], Date.today]]
+        strategy.products_to_be_added.should == [product_a]
+      end
+    end
+
+    describe "#products_to_be_added_grouped_by_date" do
+      it "should return products that are not in the current state" do
+        strategy.current_state = []
+        strategy.desired_state = [product_a]
+        strategy.products_to_be_added_grouped_by_date.should == [[[product_a], Date.today]]
       end
     end
 

@@ -1,13 +1,18 @@
 module BillingLogic::Strategies
 
+  # The Single Payment Strategy is to be used whenever you are supporting
+  # either a single product or a bundle of products that are managed under 
+  # a single recurring payment profile.
+  # This strategy will try the best to figure out the appropriate thing to do
+  # when a adding, removing, changing a subscription.
   class SinglePaymentStrategy < BaseStrategy
 
     def default_command_builder
       BillingLogic::CommandBuilders::AggregateWordBuilder
     end
 
-    def add_commands_for_products_to_be_added
-      unless products_to_be_added.empty?
+    def add_commands_for_products_to_be_added!
+      unless (products_to_be_added = products_to_be_added_grouped_by_date).empty?
         products_to_be_added.each do |group_of_products, date|
           @command_list << create_recurring_payment_command(group_of_products, 
                                                             :next_payment_date => date,

@@ -11,10 +11,6 @@ module BillingLogic::Strategies
       @payment_command_builder_class = opts.delete(:payment_command_builder_class) || default_command_builder
     end
 
-    def default_command_builder
-      BillingLogic::CommandBuilders::BasicBuilder
-    end
-
     def command_list
       calculate_list
       @command_list.flatten
@@ -24,26 +20,49 @@ module BillingLogic::Strategies
       @current_state = removed_obsolete_subscriptions(subscriptions)
     end
 
+    # Returns a list of products that are not in the current state grouped by
+    # date
+    # @return [Array]
+    def products_to_be_added_grouped_by_date
+      group_by_date(products_to_be_added)
+    end
+
+    def products_to_be_added
+      desired_state.reject do |product|
+        ProductComparator.new(product).in_like?(current_active_or_pending_products)
+      end
+    end
+
+    def products_to_be_removed
+      current_active_or_pending_products.reject do |product|
+        ProductComparator.new(product).included?(desired_state)
+      end
+    end
+
+    def current_products(opts = {})
+      profiles_by_status(opts[:active]).map { |profile| profile.products }.flatten
+    end
+
+    protected
+
+    def default_command_builder
+      BillingLogic::CommandBuilders::BasicBuilder
+    end
+
     def removed_obsolete_subscriptions(subscriptions)
       subscriptions.reject{|sub| sub.next_payment_date < today }
     end
 
     def calculate_list
-      reset_command_list
-      add_commands_for_products_to_be_added
-      add_commands_for_products_to_be_removed
+      reset_command_list!
+      add_commands_for_products_to_be_added!
+      add_commands_for_products_to_be_removed!
     end
 
-    def add_commands_for_products_to_be_added
-    end
-
-    # Question:
-    # Should the method return a data structure or an object?
-    def products_to_be_added
-      new_products = desired_state.reject do |product|
-        ProductComparator.new(product).in_like?(current_active_or_pending_products)
-      end
-      group_by_date(new_products)
+    # NOTE: This method is the most likely to be have different implementations in
+    # each strategy.
+    # @return [nil]
+    def add_commands_for_products_to_be_added!
     end
 
     # this doesn't feel like it should be here
@@ -102,16 +121,6 @@ module BillingLogic::Strategies
       Date.today
     end
 
-    def products_to_be_removed
-      current_active_or_pending_products.reject do |product|
-        ProductComparator.new(product).included?(desired_state)
-      end
-    end
-
-    def current_products(opts = {})
-      profiles_by_status(opts[:active]).map { |profile| profile.products }.flatten
-    end
-
     def profiles_by_status(active_or_pending = nil)
       current_state.reject { |profile| !profile.active_or_pending? == active_or_pending}
     end
@@ -125,7 +134,7 @@ module BillingLogic::Strategies
     end
 
     # this should be part of a separate strategy object
-    def add_commands_for_products_to_be_removed
+    def add_commands_for_products_to_be_removed!
       current_state.each do |profile|
 
         # We need to issue refunds before cancelling profiles
@@ -201,10 +210,6 @@ module BillingLogic::Strategies
       payment_command_builder_class.create_recurring_payment_commands(products, opts)
     end
 
-    def reset_command_list
-      @command_list.clear
-    end
-
     class ProductComparator
       extend Forwardable
       def_delegators :@product, :name, :price, :billing_cycle
@@ -243,6 +248,10 @@ module BillingLogic::Strategies
       def same_price?(other_product)
         @product.price == other_product.price
       end
+    end
+
+    def reset_command_list!
+      @command_list.clear
     end
 
   end
