@@ -14,7 +14,7 @@ Feature: Independent Payment Strategy
       | A @ $30/mo              | add A @ $30/mo on 03/15/12                             |
       | A @ $30/mo, B @ $40/mo  | add A @ $30/mo on 03/15/12, add B @ $40/mo on 03/15/12 |
 
-    Scenario Outline: Transitioning a subscription to indipendent payments
+    Scenario Outline: Transitioning a subscription to independent payments
       Given I support Independent Payment Strategy
       And   Today is 3/15/12
       And   I have the following subscriptions:
