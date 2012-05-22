@@ -19,10 +19,8 @@ module BillingLogic
           raise Exception.new('Implement me')
         end
 
-        def cancel_recurring_payment_commands(*profile_ids)
-          profile_ids.map do |profile_id|
-            "cancel #{profile_id} now"
-          end
+        def cancel_recurring_payment_commands(profile_id, opts = {})
+          "cancel #{'and disable ' if opts[:disable]}#{profile_id} #{"with refund $#{opts[:refund]} " if opts[:refund]}now"
         end
 
         def refund_recurring_payments_command(profile_id, amount)
@@ -33,8 +31,8 @@ module BillingLogic
           "disable #{profile_id} now"
         end
 
-        def remove_product_from_payment_profile(profile_id, products)
-          "remove #{products.map { |product| product.id }.join(" & ")} from #{profile_id} now"
+        def remove_product_from_payment_profile(profile_id, products, opts)
+          "remove #{products.map { |product| product.id }.join(" & ")} from #{profile_id} #{"with refund $#{opts[:refund]}" if opts[:refund]}now"
         end
       end
     end

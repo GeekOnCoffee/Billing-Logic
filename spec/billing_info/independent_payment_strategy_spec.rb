@@ -161,7 +161,7 @@ module BillingLogic
         end
 
         it "should remove the product from the profile with the partial match" do
-          strategy_with_3_current_products.should_receive(:remove_product_from_payment_profile).with('i-1', [product_a]).once
+          strategy_with_3_current_products.should_receive(:remove_product_from_payment_profile).with('i-1', [product_a], {}).once
           strategy_with_3_current_products.command_list
         end
 
@@ -178,7 +178,7 @@ module BillingLogic
         it "should add monthly plan at the end of the year when switching to monthly cycle" do
           strategy.desired_state = [product_a]
           strategy.should_receive(:create_recurring_payment_command).with([product_a], hash_including(:next_payment_date => profile_a.next_payment_date)).once
-          strategy.should_receive(:cancel_recurring_payment_command).with(profile_a.id).once
+          strategy.should_receive(:cancel_recurring_payment_command).with(profile_a.id, {}).once
           strategy.command_list 
           # Note: I used the following for debugging, but leaving it inside
           # would couple the tests for the strategy with the command builder as

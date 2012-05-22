@@ -138,12 +138,12 @@ module BillingLogic::Strategies
       current_state.each do |profile|
 
         # We need to issue refunds before cancelling profiles
-        @command_list << issue_refunds_if_necessary(profile)
+        refund_options = issue_refunds_if_necessary(profile)
         remaining_products = remove_products_from_profile(profile)
 
         if remaining_products.empty? # all products in payment profile needs to be removed
 
-          @command_list << cancel_recurring_payment_command(profile.id)
+          @command_list << cancel_recurring_payment_command(profile.id, refund_options)
 
         elsif remaining_products.size == profile.products.size # nothing has changed
           #
@@ -154,10 +154,11 @@ module BillingLogic::Strategies
           if remaining_products.size >= 1
 
             @command_list << remove_product_from_payment_profile(profile.id,
-                                                                 removed_products_from_profile(profile))
+                                                                 removed_products_from_profile(profile),
+                                                                refund_options)
           else
 
-            @command_list << cancel_recurring_payment_command(profile.id)
+            @command_list << cancel_recurring_payment_command(profile.id, refund_options)
             @command_list << create_recurring_payment_command(remaining_products, 
                                                               :next_payment_date => profile.next_payment_date,
                                                               :period => extract_period_from_product_list(remaining_products))
@@ -179,31 +180,31 @@ module BillingLogic::Strategies
     end
 
     def issue_refunds_if_necessary(profile)
-      ret = []
+      ret = {}
       removed_products_from_profile(profile).map do |removed_product|
         unless profile.refundable_payment_amount(removed_product).zero?
-          ret << refund_recurring_payments_command(profile.id, profile.refundable_payment_amount(*removed_product))
-          ret << disable_subscription(profile.id)
+          ret.merge!(refund_recurring_payments_command(profile.id, profile.refundable_payment_amount(*removed_product)))
+          ret.merge!(disable_subscription(profile.id))
         end
       end
       ret
     end
 
     def refund_recurring_payments_command(profile_id, amount)
-      payment_command_builder_class.refund_recurring_payments_command(profile_id, amount)
+      { :refund => amount, :profile_id => profile_id }
     end
 
     def disable_subscription(profile_id)
-      payment_command_builder_class.disable_subscription(profile_id)
+      { :disable => true }
     end
 
     # these messages seems like they should be pluggable
-    def cancel_recurring_payment_command(profile_id)
-      payment_command_builder_class.cancel_recurring_payment_commands(profile_id)
+    def cancel_recurring_payment_command(profile_id, opts = {})
+      payment_command_builder_class.cancel_recurring_payment_commands(profile_id, opts)
     end
 
-    def remove_product_from_payment_profile(profile_id, removed_products)
-      payment_command_builder_class.remove_product_from_payment_profile(profile_id, removed_products)
+    def remove_product_from_payment_profile(profile_id, removed_products, opts = {})
+      payment_command_builder_class.remove_product_from_payment_profile(profile_id, removed_products, opts)
     end
 
     def create_recurring_payment_command(products, opts = {:next_payment_date => Date.today})
