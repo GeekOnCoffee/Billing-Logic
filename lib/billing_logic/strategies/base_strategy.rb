@@ -1,11 +1,14 @@
-module BillingLogic
+require 'forwardable'
+module BillingLogic::Strategies
   class BaseStrategy
-    attr_accessor :desired_state, :current_state, :payment_command_builder_class
+
+    attr_accessor :desired_state, :current_state, :payment_command_builder_class, :default_command_builder
+
     def initialize(opts = {})
       self.current_state = opts.delete(:current_state) || []
       @desired_state = opts.delete(:desired_state) || []
       @command_list = []
-      @payment_command_builder_class = opts.delete(:payment_command_builder_class) || PaymentCommandBuilder
+      @payment_command_builder_class = opts.delete(:payment_command_builder_class) || default_command_builder
     end
 
     def command_list
@@ -17,26 +20,49 @@ module BillingLogic
       @current_state = removed_obsolete_subscriptions(subscriptions)
     end
 
+    # Returns a list of products that are not in the current state grouped by
+    # date
+    # @return [Array]
+    def products_to_be_added_grouped_by_date
+      group_by_date(products_to_be_added)
+    end
+
+    def products_to_be_added
+      desired_state.reject do |product|
+        ProductComparator.new(product).in_like?(current_active_or_pending_products)
+      end
+    end
+
+    def products_to_be_removed
+      current_active_or_pending_products.reject do |product|
+        ProductComparator.new(product).included?(desired_state)
+      end
+    end
+
+    def current_products(opts = {})
+      profiles_by_status(opts[:active]).map { |profile| profile.products }.flatten
+    end
+
+    protected
+
+    def default_command_builder
+      BillingLogic::CommandBuilders::BasicBuilder
+    end
+
     def removed_obsolete_subscriptions(subscriptions)
       subscriptions.reject{|sub| sub.next_payment_date < today }
     end
 
     def calculate_list
-      reset_command_list
-      add_commands_for_products_to_be_added
-      add_commands_for_products_to_be_removed
+      reset_command_list!
+      add_commands_for_products_to_be_added!
+      add_commands_for_products_to_be_removed!
     end
 
-    def add_commands_for_products_to_be_added
-    end
-
-    # Question:
-    # Should the method return a data structure or an object?
-    def products_to_be_added
-      new_products = desired_state.reject do |product|
-        ProductComparator.new(product).in_like?(current_active_or_pending_products)
-      end
-      group_by_date(new_products)
+    # NOTE: This method is the most likely to be have different implementations in
+    # each strategy.
+    # @return [nil]
+    def add_commands_for_products_to_be_added!
     end
 
     # this doesn't feel like it should be here
@@ -45,7 +71,8 @@ module BillingLogic
       new_products.each do |product|
         if previously_cancelled_product?(product)
           date = next_payment_date_from_profile_with_product(product, :active => false)
-        elsif previous_product = changed_product_subscription?(product)
+        elsif (previous_product = changed_product_subscription?(product))
+          update_product_billing_cycle_and_payment!(product, previous_product)
           date = next_payment_date_from_product(product, previous_product)
         else
           date = today
@@ -74,25 +101,24 @@ module BillingLogic
       end.compact.max
     end
 
+    def update_product_billing_cycle_and_payment!(product, previous_product)
+      if product.billing_cycle.periodicity > previous_product.billing_cycle.periodicity
+        product.initial_payment = product.price
+        product.billing_cycle.anniversary = previous_product.billing_cycle.anniversary
+      end
+    end
+
     def next_payment_date_from_product(product, previous_product)
-      product.initial_payment = product.price
-      product.billing_cycle.anniversary = next_payment_date_from_profile_with_product(product, :active => true) #previous_product.billing_cycle.next_payment_date
-      product.billing_cycle.closest_anniversary_date_including(product.billing_cycle.anniversary)
+      if product.billing_cycle.periodicity > previous_product.billing_cycle.periodicity
+        product.billing_cycle.next_payment_date
+      else
+        product.billing_cycle.anniversary = next_payment_date_from_profile_with_product(product, :active => true) 
+      end
     end
 
     # for easy stubbing/subclassing/replacement
     def today
       Date.today
-    end
-
-    def products_to_be_removed
-      current_active_or_pending_products.reject do |product|
-        ProductComparator.new(product).included?(desired_state)
-      end
-    end
-
-    def current_products(opts = {})
-      profiles_by_status(opts[:active]).map { |profile| profile.products }.flatten
     end
 
     def profiles_by_status(active_or_pending = nil)
@@ -108,20 +134,35 @@ module BillingLogic
     end
 
     # this should be part of a separate strategy object
-    def add_commands_for_products_to_be_removed
-      # puts "\n ### \n #{current_state} \n\####"
+    def add_commands_for_products_to_be_removed!
       current_state.each do |profile|
+
         # We need to issue refunds before cancelling profiles
-        @command_list << issue_refunds_if_necessary(profile)
+        refund_options = issue_refunds_if_necessary(profile)
         remaining_products = remove_products_from_profile(profile)
+
         if remaining_products.empty? # all products in payment profile needs to be removed
-          @command_list << cancel_recurring_payment_command(profile.id)
+
+          @command_list << cancel_recurring_payment_command(profile.id, refund_options)
+
         elsif remaining_products.size == profile.products.size # nothing has changed
+          #
           # do nothing
+          #
         else  # only some products are being removed and the profile needs to be updated
-          @command_list << cancel_recurring_payment_command(profile.id)
-          @command_list << create_recurring_payment_command(remaining_products, :next_payment_date => profile.next_payment_date,
-                                                           :period => extract_period_from_product_list(remaining_products))
+
+          if remaining_products.size >= 1
+
+            @command_list << remove_product_from_payment_profile(profile.id,
+                                                                 removed_products_from_profile(profile),
+                                                                refund_options)
+          else
+
+            @command_list << cancel_recurring_payment_command(profile.id, refund_options)
+            @command_list << create_recurring_payment_command(remaining_products, 
+                                                              :next_payment_date => profile.next_payment_date,
+                                                              :period => extract_period_from_product_list(remaining_products))
+          end
         end
       end
     end
@@ -134,36 +175,48 @@ module BillingLogic
       profile.products.reject { |product| products_to_be_removed.include?(product) }
     end
 
+    def removed_products_from_profile(profile)
+      profile.products.select { |product| products_to_be_removed.include?(product) }
+    end
+
     def issue_refunds_if_necessary(profile)
-      ret = []
-      profile.products.find_all{ |product| products_to_be_removed.include?(product) }.map do |refunded_product|
-        if profile.last_payment_refundable?
-          ret << refund_recurring_payments_command(profile.id, profile.last_payment_amount)
-          ret << disable_subscription(profile.id)
+      ret = {}
+      removed_products_from_profile(profile).map do |removed_product|
+        unless profile.refundable_payment_amount(removed_product).zero?
+          ret.merge!(refund_recurring_payments_command(profile.id, profile.refundable_payment_amount(*removed_product)))
+          ret.merge!(disable_subscription(profile.id))
         end
       end
       ret
     end
 
     def refund_recurring_payments_command(profile_id, amount)
-      payment_command_builder_class.refund_recurring_payments_command(profile_id, amount)
+      { :refund => amount, :profile_id => profile_id }
     end
 
     def disable_subscription(profile_id)
-      payment_command_builder_class.disable_subscription(profile_id)
+      { :disable => true }
     end
 
     # these messages seems like they should be pluggable
-    def cancel_recurring_payment_command(profile_id)
-      payment_command_builder_class.cancel_recurring_payment_commands(profile_id)
+    def cancel_recurring_payment_command(profile_id, opts = {})
+      payment_command_builder_class.cancel_recurring_payment_commands(profile_id, opts)
+    end
+
+    def remove_product_from_payment_profile(profile_id, removed_products, opts = {})
+      payment_command_builder_class.remove_product_from_payment_profile(profile_id, removed_products, opts)
     end
 
     def create_recurring_payment_command(products, opts = {:next_payment_date => Date.today})
       payment_command_builder_class.create_recurring_payment_commands(products, opts)
     end
 
-    def reset_command_list
-      @command_list.clear
+    def with_products_to_be_added(&block)
+      unless (products_to_be_added = products_to_be_added_grouped_by_date).empty?
+        products_to_be_added.each do |group_of_products, date|
+          yield(group_of_products, date)
+        end
+      end
     end
 
     class ProductComparator
@@ -204,6 +257,10 @@ module BillingLogic
       def same_price?(other_product)
         @product.price == other_product.price
       end
+    end
+
+    def reset_command_list!
+      @command_list.clear
     end
 
   end

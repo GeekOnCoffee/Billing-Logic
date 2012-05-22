@@ -1,5 +1,5 @@
 module StrategyHelper
-  def set_current_strategy(strategy, opts = {:command_builder => CommandBuilders::WordBuilder})
+  def set_current_strategy(strategy, opts = {:command_builder => BillingLogic::CommandBuilders::WordBuilder})
     @strategy = strategy.new(:payment_command_builder_class => opts[:command_builder])
   end
 
@@ -58,7 +58,7 @@ end
 World(StrategyHelper)
 
 Given /^I support Independent Payment Strategy$/ do
-  set_current_strategy(BillingLogic::IndependentPaymentStrategy)
+  set_current_strategy(BillingLogic::Strategies::IndependentPaymentStrategy)
 end
 
 Given /^I don't have any subscriptions$/ do
@@ -76,14 +76,17 @@ Given /^I have the following subscriptions:$/ do |table|
     products = str_to_product_formatting(row[0])
     products.each { |product| product.billing_cycle.anniversary = next_billing_date }
     billing_cycle = str_to_billing_cycle(row[0], next_billing_date)
-    OpenStruct.new(
+    ostruct = OpenStruct.new(
                :id => row[0],
                :products =>  products,
                :next_payment_date =>  next_billing_date,
                :billing_cycle => billing_cycle,
                :active_or_pending? => row[1] =~ /active/,
-               :last_payment_refundable? => false
               )
+    def ostruct.refundable_payment_amount(foo)
+      @refundable_payment_amount || 0.0
+    end
+    ostruct
   end
   # puts "\n strategy.current_state  #{strategy.current_state.first.products }"
 
@@ -95,7 +98,8 @@ When /^I change to having: (nothing|.*)$/ do |products|
 
 end
 
-Then /^(?:|I )(#{ASSERTION})expect the following action: ((?:add|cancel|disable|refund \$\d+ to) #{PRODUCT_FORMATTING} (?:on #{DATE}|now).*)$/ do |assertion, commands|
+# Then /^(?:|I )(#{ASSERTION})expect the following action: ((?:add|cancel|disable|refund \$\d+ to) #{PRODUCT_FORMATTING} (?:on #{DATE}|now).*)$/ do |assertion, commands|
+Then /^(?:|I )(#{ASSERTION})expect the following action: ((?:remove|add|cancel|disable|refund \$\d+ to) .*)$/ do |assertion, commands|
   commands.split(/, /).each do |command|
     command_list_should_include(command, assertion)
   end

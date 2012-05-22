@@ -1,7 +1,12 @@
 require 'spec_helper'
 
 module BillingLogic
-  describe IndependentPaymentStrategy do
+  describe Strategies::IndependentPaymentStrategy do
+    module With0RefundablePayment
+      def refundable_payment_amount(foo)
+        0.0
+      end
+    end
     let(:monthly_cycle) do
       BillingCycle.new(:period => :month, 
                        :frequency => 1,
@@ -14,47 +19,43 @@ module BillingLogic
                        :anniversary => Date.today - 7)
     end
 
-    let(:product_a) { mock('Product A', :name => 'A', :price => 10, :billing_cycle => monthly_cycle) }
-    let(:product_b) { mock('Product B', :name => 'B', :price => 20, :billing_cycle => monthly_cycle) }
-    let(:product_c) { mock('Product C', :name => 'C', :price => 30, :billing_cycle => monthly_cycle) }
-    let(:product_d) { mock('Product D', :name => 'D', :price => 40, :billing_cycle => monthly_cycle) }
-    let(:strategy)  { IndependentPaymentStrategy.new }
+    let(:product_a) { MockProduct.new(:id => 1, :name => 'A', :price => 10, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
+    let(:product_a_yearly) { MockProduct.new(:id => 1, :name => 'A', :price => 90, :billing_cycle => yearly_cycle, :initial_payment => 0.0) }
+    let(:product_b) { MockProduct.new(:id => 2, :name => 'B', :price => 20, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
+    let(:product_c) { MockProduct.new(:id => 3, :name => 'C', :price => 30, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
+    let(:product_d) { MockProduct.new(:id => 4, :name => 'D', :price => 40, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
+    let(:strategy)  { Strategies::IndependentPaymentStrategy.new }
 
 
     let(:profile_a) do
-      mock('Profile A', 
+      MockProfile.new( 
             :products => [product_a, product_b],
             :price => 30,
             :id => 'i-1',
             :next_payment_date => monthly_cycle.next_payment_date,
-            :active_or_pending? => true,
-            :last_payment_refundable? => false
-           )
-    end
-    let(:canceled_profile_d) do
-      mock('Profile D', 
-            :products => [product_d],
-            :price => 40,
-            :id => 'i-4',
-            :next_payment_date => monthly_cycle.next_payment_date,
-            :active_or_pending? => false,
-            :last_payment_refundable? => false
+            :active_or_pending => true
            )
     end
 
+    let(:canceled_profile_d) do
+      MockProfile.new( 
+                     :products => [product_d],
+                     :price => 40,
+                     :id => 'i-4',
+                     :next_payment_date => monthly_cycle.next_payment_date,
+                     :active_or_pending => false,
+                    )
+    end
+
     let(:strategy_with_3_current_products) do
-      IndependentPaymentStrategy.new(:current_state =>
-                                       [profile_a,
-                                        mock('Profile B', 
-                                            :products => [product_c],
-                                            :price => 30,
-                                            :id => 'i-2',
-                                            :active_or_pending? => true,
-                                            :next_payment_date => monthly_cycle.next_payment_date,
-                                            :last_payment_refundable? => false
-                                            )
-                                        ]
-                                      )
+      profile = MockProfile.new( 
+                     :products => [product_c],
+                     :price => 30,
+                     :id => 'i-2',
+                     :next_payment_date => monthly_cycle.next_payment_date,
+                     :active_or_pending => true,
+                     )
+      Strategies::IndependentPaymentStrategy.new(:current_state => [profile_a, profile])
     end
 
     describe "#current_products" do
@@ -77,7 +78,15 @@ module BillingLogic
       it "should return products that are not in the current state" do
         strategy.current_state = []
         strategy.desired_state = [product_a]
-        strategy.products_to_be_added.should == [[[product_a], Date.today]]
+        strategy.products_to_be_added.should == [product_a]
+      end
+    end
+
+    describe "#products_to_be_added_grouped_by_date" do
+      it "should return products that are not in the current state" do
+        strategy.current_state = []
+        strategy.desired_state = [product_a]
+        strategy.products_to_be_added_grouped_by_date.should == [[[product_a], Date.today]]
       end
     end
 
@@ -102,7 +111,7 @@ module BillingLogic
 
 
     context 'with empty current state' do
-      let(:strategy) { IndependentPaymentStrategy.new }
+      let(:strategy) { Strategies::IndependentPaymentStrategy.new }
 
       context 'with an empty desired state' do
         it 'should return an empty command list' do
@@ -151,34 +160,35 @@ module BillingLogic
           strategy_with_3_current_products.desired_state = [product_b, product_c]
         end
 
-        it "should cancel the profile with the partial match" do
-          strategy_with_3_current_products.should_receive(:cancel_recurring_payment_command).with('i-1').once
+        it "should remove the product from the profile with the partial match" do
+          strategy_with_3_current_products.should_receive(:remove_product_from_payment_profile).with('i-1', [product_a], {}).once
           strategy_with_3_current_products.command_list
         end
 
-        it "should create a new profile with the remaining product at the end of of the current billing cycle" do
-          strategy_with_3_current_products.should_receive(:create_recurring_payment_command).with([product_b], hash_including(:next_payment_date => profile_a.next_payment_date)).once
-          strategy_with_3_current_products.command_list
-        end
       end
 
       context "with a yearly subscription" do
         before do 
-          profile_a.stub(:next_payment_date) { Date.today >> 12 }
-          strategy.current_state = [profile_a]
+          profile_a.products          = [product_a_yearly] 
+          profile_a.next_payment_date = product_a_yearly.billing_cycle.next_payment_date
+          profile_a.billing_cycle     = yearly_cycle 
+          strategy.current_state      = [profile_a]
         end
 
         it "should add monthly plan at the end of the year when switching to monthly cycle" do
-          product_a.stub(:billing_cycle) { monthly_cycle }
           strategy.desired_state = [product_a]
           strategy.should_receive(:create_recurring_payment_command).with([product_a], hash_including(:next_payment_date => profile_a.next_payment_date)).once
-          strategy.should_receive(:cancel_recurring_payment_command).with(profile_a.id).once
-          strategy.command_list
+          strategy.should_receive(:cancel_recurring_payment_command).with(profile_a.id, {}).once
+          strategy.command_list 
+          # Note: I used the following for debugging, but leaving it inside
+          # would couple the tests for the strategy with the command builder as
+          # well, which would be bad.
+          # .should == ["add 1 @ $10/mo on #{profile_a.next_payment_date.strftime('%m/%d/%y')}", "cancel i-1 now"]
         end
 
         context "that is cancelled and being re-added" do
           before do
-            profile_a.stub(:active_or_pending?) { false }
+            profile_a.active_or_pending = false 
             strategy.desired_state = [product_a]
           end
 
@@ -188,7 +198,7 @@ module BillingLogic
           end
 
           it "should re-add the cancelled product at the end of the year" do
-            strategy.should_receive(:create_recurring_payment_command).with([product_a], :next_payment_date => Date.today >> 12).once
+            strategy.should_receive(:create_recurring_payment_command).with([product_a], :next_payment_date => profile_a.next_payment_date).once
             strategy.command_list
           end
         end

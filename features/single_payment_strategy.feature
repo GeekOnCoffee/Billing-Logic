@@ -19,16 +19,17 @@ Feature: Single Payment Strategy
     And   Today is 3/10/12
     And   I have the following subscriptions:
     # | billing profile                   | status    | #comments                                                | next billing date   |
-      | (A @ $30/mo & B @ $40/mo) @ $70/mo | active    | with current permissions and the next billing date is on | 4/1/12              |
+      | (A @ $30/mo & B @ $20/mo & C @ $20/mo) @ $70/mo | active    | with current permissions and the next billing date is on | 4/1/12              |
     When  I change to having: <desired state>
     Then  I expect the following action: <action>
     Examples: Removing all products
       | desired state | action               |
-      | nothing       | cancel (A @ $30/mo & B @ $40/mo) @ $70/mo now |
+      | nothing       | cancel (A @ $30/mo & B @ $20/mo & C @ $20/mo) @ $70/mo now |
 
     Examples: Removing partial products
-      | desired state | action               |
-      | A @ $30/mo    | cancel (A @ $30/mo & B @ $40/mo) @ $70/mo now, add (A @ $30/mo) @ $30/mo on 04/01/12 |
+      | desired state             | action                                                                                  |
+      | A @ $30/mo                | remove B @ $20/mo & C @ $20/mo from (A @ $30/mo & B @ $20/mo & C @ $20/mo) @ $70/mo now |
+      | A @ $30/mo, C @ $20/mo    | remove B @ $20/mo from (A @ $30/mo & B @ $20/mo & C @ $20/mo) @ $70/mo now              |
 
   Scenario Outline: Changing a current payment profile to a different product
     Given I support a Single Payment Strategy

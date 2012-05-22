@@ -23,20 +23,36 @@ module BillingLogic
     end
 
     def next_payment_date
-      closest_anniversary_date_including(Date.today)
+      closest_future_anniversary_date_including(anniversary)
     end
     
     def closest_anniversary_date_including(date) 
       date_in_past = date < anniversary
-      operators =   {:month => date_in_past ? :<< : :>>, 
-                     :day   => date_in_past ? :-  : :+ }
+      advance_date_by_period(anniversary, date_in_past)
+    end
+
+    def closest_future_anniversary_date_including(date)
+      return anniversary if anniversary > date
+      return advance_date_by_period(anniversary.dup) if anniversary == date
+      next_anniversary = anniversary.dup
+      while(date > next_anniversary) 
+        next_anniversary = advance_date_by_period(next_anniversary)
+      end
+      next_anniversary
+    end
+
+    def advance_date_by_period(date, revert = false)
+      operators =   {:month => revert ? :<< : :>>, 
+                     :day   => revert ? :-  : :+ }
       case self.period
-      when :month
-        anniversary.send(operators[:month], self.frequency)
-      when :day, :semimonth, :week
-        anniversary.send(operators[:day], self.periodicity)
       when :year
-        anniversary.send(operators[:month], (self.frequency * 12))
+        date.send(operators[:month], (self.frequency * 12))
+      when :month
+        date.send(operators[:month], self.frequency)
+      when :week
+        date.send(operators[:month], (self.frequency * 7))
+      when :day
+        date.send(operators[:month], self.frequency)
       end
     end
 
