@@ -50,7 +50,7 @@ module BillingLogic::Strategies
     end
 
     def removed_obsolete_subscriptions(subscriptions)
-      subscriptions.reject{|sub| sub.next_payment_date < today }
+      subscriptions.reject{|sub| !sub.next_payment_date || sub.next_payment_date < today }
     end
 
     def calculate_list
