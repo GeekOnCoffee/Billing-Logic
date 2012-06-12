@@ -6,7 +6,7 @@ Given /^I have the following subscriptions:$/ do |table|
     products.each { |product| product.billing_cycle.anniversary = next_billing_date }
     billing_cycle = str_to_billing_cycle(row[0], next_billing_date)
     ostruct = OpenStruct.new(
-               :id => row[0],
+               :identifier => row[0],
                :products =>  products,
                :next_payment_date =>  next_billing_date,
                :billing_cycle => billing_cycle,

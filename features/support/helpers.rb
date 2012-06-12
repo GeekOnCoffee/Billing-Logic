@@ -55,7 +55,7 @@ module StringParsers
       billing_cycle = $3 ? BillingLogic::BillingCycle.new(:frequency => 1, :period => $3.include?('mo') ? :month : :year) : nil
       OpenStruct.new(:name => $1, 
                      :price => $2.to_i, 
-                     :id => "#{$1} @ $#{$2}#{$3}", 
+                     :identifier => "#{$1} @ $#{$2}#{$3}", 
                      :billing_cycle => billing_cycle, 
                      :payments => [],
                      :initial_payment => 0)

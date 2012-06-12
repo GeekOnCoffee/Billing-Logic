@@ -43,9 +43,9 @@ module BillingLogic
           products.map do |product|
             initial_payment_string = product.initial_payment.zero? ? '' : " with initial payment set to $#{product.initial_payment}" 
             if product.billing_cycle.frequency == 1
-              "add 111 #{product.identifier} on #{opts[:next_payment_date].strftime('%m/%d/%y')}#{initial_payment_string}"
+              "add #{product.identifier} on #{opts[:next_payment_date].strftime('%m/%d/%y')}#{initial_payment_string}"
             else
-              "add 222 #{product.identifier} on #{opts[:next_payment_date].strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}#{initial_payment_string}"
+              "add #{product.identifier} on #{opts[:next_payment_date].strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}#{initial_payment_string}"
             end
           end
         end

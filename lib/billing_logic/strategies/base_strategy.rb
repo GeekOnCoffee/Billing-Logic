@@ -143,7 +143,7 @@ module BillingLogic::Strategies
 
         if remaining_products.empty? # all products in payment profile needs to be removed
 
-          @command_list << cancel_recurring_payment_command(profile.id, refund_options)
+          @command_list << cancel_recurring_payment_command(profile.identifier, refund_options)
 
         elsif remaining_products.size == profile.products.size # nothing has changed
           #
@@ -153,12 +153,12 @@ module BillingLogic::Strategies
 
           if remaining_products.size >= 1
 
-            @command_list << remove_product_from_payment_profile(profile.id,
+            @command_list << remove_product_from_payment_profile(profile.identifier,
                                                                  removed_products_from_profile(profile),
                                                                 refund_options)
           else
 
-            @command_list << cancel_recurring_payment_command(profile.id, refund_options)
+            @command_list << cancel_recurring_payment_command(profile.identifier, refund_options)
             @command_list << create_recurring_payment_command(remaining_products, 
                                                               :next_payment_date => profile.next_payment_date,
                                                               :period => extract_period_from_product_list(remaining_products))
@@ -183,8 +183,8 @@ module BillingLogic::Strategies
       ret = {}
       removed_products_from_profile(profile).map do |removed_product|
         unless profile.refundable_payment_amount(removed_product).zero?
-          ret.merge!(refund_recurring_payments_command(profile.id, profile.refundable_payment_amount(*removed_product)))
-          ret.merge!(disable_subscription(profile.id))
+          ret.merge!(refund_recurring_payments_command(profile.identifier, profile.refundable_payment_amount(*removed_product)))
+          ret.merge!(disable_subscription(profile.identifier))
         end
       end
       ret
