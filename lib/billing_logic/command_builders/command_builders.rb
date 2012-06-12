@@ -61,7 +61,7 @@ module BillingLogic
         def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today, :price => nil, :frequency => 1, :period => nil})
           product_ids = products.map { |product| product.identifier }.join(' & ')
           price = opts[:price] || products.inject(0){ |k, product| k += product.price; k }
-          price_string = price #BuilderHelpers.money(price)
+          price_string = BuilderHelpers.money(price)
           initial_payment = opts[:initial_payment] || products.map { |product| product.initial_payment || 0 }.reduce(0) { |a, e| a + e }
           initial_payment_string = initial_payment.zero? ? '' : " with initial payment set to $#{initial_payment.to_i}"
           "add (#{product_ids}) @ $#{price_string}#{periodicity_abbrev(opts[:period])} on #{opts[:next_payment_date].strftime('%m/%d/%y')}#{initial_payment_string}"

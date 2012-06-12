@@ -11,8 +11,8 @@ Feature: Single Payment Strategy
     Then  I expect the following action: <action>
     Examples:
       | added products          | action                 |
-      | A @ $30/mo              | add (A @ $30/mo) @ $30/mo on 03/01/12 |
-      | A @ $30/mo, B @ $40/mo  | add (A @ $30/mo & B @ $40/mo) @ $70/mo on 03/01/12|
+      | A @ $30/mo              | add (A @ $30/mo) @ $30.00/mo on 03/01/12 |
+      | A @ $30/mo, B @ $40/mo  | add (A @ $30/mo & B @ $40/mo) @ $70.00/mo on 03/01/12|
 
   Scenario Outline: Removing a product from your recurring payment profile
     Given I support a Single Payment Strategy
@@ -42,12 +42,12 @@ Feature: Single Payment Strategy
    Examples: When changing to a lower priced products we want to cancel the current subscription and
              create a new one for the lesser price starting at the end of the previous
       | desired state | action               |
-      | B @ $20/mo    | cancel (A @ $30/mo) @ $30/mo now, add (B @ $20/mo) @ $20/mo on 03/10/12 |
+      | B @ $20/mo    | cancel (A @ $30/mo) @ $30/mo now, add (B @ $20/mo) @ $20.00/mo on 03/10/12 |
 
    Examples: When changing to a higher priced products we want to cancel the current subscription and
              create a new one with the first payment prorated for the portion of the month paid
       | desired state | action               |
-      | B @ $40/mo    | cancel (A @ $30/mo) @ $30/mo now, add (B @ $40/mo) @ $40/mo on 03/10/12 |
+      | B @ $40/mo    | cancel (A @ $30/mo) @ $30/mo now, add (B @ $40/mo) @ $40.00/mo on 03/10/12 |
 
   Scenario Outline: Changing to a greater periodicity of a current product
     Given I support a Single Payment Strategy
@@ -60,7 +60,7 @@ Feature: Single Payment Strategy
    Examples: When changing to a greater periodicity we want to cancel the current profile &
              create a new one crediting the customer for amount paid but unused
       | desired state | action               |
-      | A @ $300/yr    | cancel (A @ $30/mo) @ $30/mo now, add (A @ $300/yr) @ $300/yr on 04/10/13 with initial payment set to $280 |
+      | A @ $300/yr    | cancel (A @ $30/mo) @ $30/mo now, add (A @ $300/yr) @ $300.00/yr on 04/10/13 with initial payment set to $280 |
 
   Scenario Outline: Changing to a lesser periodicity of a current product
     Given I support a Single Payment Strategy
@@ -73,7 +73,7 @@ Feature: Single Payment Strategy
    Examples: When changing to a lesser periodicity we want to cancel the current profile &
              schedule the new one starting at the end to the current payment profile
       | desired state | action               |
-      | A @ $30/mo    | cancel (A @ $300/yr) @ $300/yr now, add (A @ $30/mo) @ $30/mo on 04/01/12 |
+      | A @ $30/mo    | cancel (A @ $300/yr) @ $300/yr now, add (A @ $30/mo) @ $30.00/mo on 04/01/12 |
 
   Scenario Outline: Changing to a different product with greater periodicity than the current product
     Given I support a Single Payment Strategy
@@ -86,7 +86,7 @@ Feature: Single Payment Strategy
    Examples: When changing to a greater periodicity we want to cancel the current profile &
              create a new one crediting the customer for amount paid but unused
       | desired state | action               |
-      | B @ $300/yr    | cancel (A @ $30/mo) @ $30/mo now, add (B @ $300/yr) @ $300/yr on 03/10/12 |
+      | B @ $300/yr    | cancel (A @ $30/mo) @ $30/mo now, add (B @ $300/yr) @ $300.00/yr on 03/10/12 |
 
   Scenario Outline: Changing to a different product with lesser periodicity than the current product
     Given I support a Single Payment Strategy
@@ -99,5 +99,5 @@ Feature: Single Payment Strategy
    Examples: When changing to a lesser periodicity we want to cancel the current profile &
              schedule the new one starting at the end to the current payment profile
       | desired state | action               |
-      | B @ $30/mo    | cancel (A @ $300/yr) @ $300/yr now, add (B @ $30/mo) @ $30/mo on 03/10/12 |
+      | B @ $30/mo    | cancel (A @ $300/yr) @ $300/yr now, add (B @ $30/mo) @ $30.00/mo on 03/10/12 |
 
