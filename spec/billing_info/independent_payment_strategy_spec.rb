@@ -19,11 +19,11 @@ module BillingLogic
                        :anniversary => Date.today - 7)
     end
 
-    let(:product_a) { MockProduct.new(:id => 1, :name => 'A', :price => 10, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
-    let(:product_a_yearly) { MockProduct.new(:id => 1, :name => 'A', :price => 90, :billing_cycle => yearly_cycle, :initial_payment => 0.0) }
-    let(:product_b) { MockProduct.new(:id => 2, :name => 'B', :price => 20, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
-    let(:product_c) { MockProduct.new(:id => 3, :name => 'C', :price => 30, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
-    let(:product_d) { MockProduct.new(:id => 4, :name => 'D', :price => 40, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
+    let(:product_a) { MockProduct.new(:identifier => 1, :name => 'A', :price => 10, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
+    let(:product_a_yearly) { MockProduct.new(:identifier => 1, :name => 'A', :price => 90, :billing_cycle => yearly_cycle, :initial_payment => 0.0) }
+    let(:product_b) { MockProduct.new(:identifier => 2, :name => 'B', :price => 20, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
+    let(:product_c) { MockProduct.new(:identifier => 3, :name => 'C', :price => 30, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
+    let(:product_d) { MockProduct.new(:identifier => 4, :name => 'D', :price => 40, :billing_cycle => monthly_cycle, :initial_payment => 0.0) }
     let(:strategy)  { Strategies::IndependentPaymentStrategy.new }
 
 
@@ -31,8 +31,8 @@ module BillingLogic
       MockProfile.new( 
             :products => [product_a, product_b],
             :price => 30,
-            :id => 'i-1',
-            :next_payment_date => monthly_cycle.next_payment_date,
+            :identifier => 'i-1',
+            :paid_until_date => monthly_cycle.next_payment_date,
             :active_or_pending => true
            )
     end
@@ -41,8 +41,8 @@ module BillingLogic
       MockProfile.new( 
                      :products => [product_d],
                      :price => 40,
-                     :id => 'i-4',
-                     :next_payment_date => monthly_cycle.next_payment_date,
+                     :identifier => 'i-4',
+                     :paid_until_date => monthly_cycle.next_payment_date,
                      :active_or_pending => false,
                     )
     end
@@ -51,8 +51,8 @@ module BillingLogic
       profile = MockProfile.new( 
                      :products => [product_c],
                      :price => 30,
-                     :id => 'i-2',
-                     :next_payment_date => monthly_cycle.next_payment_date,
+                     :identifier => 'i-2',
+                     :paid_until_date => monthly_cycle.next_payment_date,
                      :active_or_pending => true,
                      )
       Strategies::IndependentPaymentStrategy.new(:current_state => [profile_a, profile])
@@ -126,7 +126,7 @@ module BillingLogic
         end
 
         it "should call create_recurring_payment_command with 1 product on the command builder object" do
-          strategy.payment_command_builder_class.should_receive(:create_recurring_payment_commands).with([product_a], :next_payment_date => Date.today).once
+          strategy.payment_command_builder_class.should_receive(:create_recurring_payment_commands).with([product_a], :paid_until_date => Date.today).once
           strategy.command_list
         end
 
@@ -170,15 +170,15 @@ module BillingLogic
       context "with a yearly subscription" do
         before do 
           profile_a.products          = [product_a_yearly] 
-          profile_a.next_payment_date = product_a_yearly.billing_cycle.next_payment_date
+          profile_a.paid_until_date   = product_a_yearly.billing_cycle.next_payment_date
           profile_a.billing_cycle     = yearly_cycle 
           strategy.current_state      = [profile_a]
         end
 
         it "should add monthly plan at the end of the year when switching to monthly cycle" do
           strategy.desired_state = [product_a]
-          strategy.should_receive(:create_recurring_payment_command).with([product_a], hash_including(:next_payment_date => profile_a.next_payment_date)).once
-          strategy.should_receive(:cancel_recurring_payment_command).with(profile_a.id, {}).once
+          strategy.should_receive(:create_recurring_payment_command).with([product_a], hash_including(:paid_until_date => profile_a.paid_until_date)).once
+          strategy.should_receive(:cancel_recurring_payment_command).with(profile_a.identifier, {}).once
           strategy.command_list 
           # Note: I used the following for debugging, but leaving it inside
           # would couple the tests for the strategy with the command builder as
@@ -198,7 +198,7 @@ module BillingLogic
           end
 
           it "should re-add the cancelled product at the end of the year" do
-            strategy.should_receive(:create_recurring_payment_command).with([product_a], :next_payment_date => profile_a.next_payment_date).once
+            strategy.should_receive(:create_recurring_payment_command).with([product_a], :paid_until_date => profile_a.paid_until_date).once
             strategy.command_list
           end
         end
@@ -211,7 +211,7 @@ module BillingLogic
         context "when re-adding the cancelled product" do
           it "should add it to the end of the cancelled period" do
             strategy.desired_state = [product_d]
-            strategy.should_receive(:create_recurring_payment_command).with([product_d], :next_payment_date => canceled_profile_d.next_payment_date).once
+            strategy.should_receive(:create_recurring_payment_command).with([product_d], :paid_until_date => canceled_profile_d.paid_until_date).once
             strategy.command_list
           end
         end
@@ -226,7 +226,7 @@ module BillingLogic
         context "when re-adding the cancelled product" do
           it "should add it to the end of the cancelled period" do
             strategy.desired_state = [product_d]
-            strategy.should_receive(:create_recurring_payment_command).with([product_d], :next_payment_date => canceled_profile_d.next_payment_date).once
+            strategy.should_receive(:create_recurring_payment_command).with([product_d], :paid_until_date => canceled_profile_d.paid_until_date).once
             strategy.command_list
           end
         end

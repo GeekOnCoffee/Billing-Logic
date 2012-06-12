@@ -1,14 +1,14 @@
 Given /^I have the following subscriptions:$/ do |table|
   # table is a Cucumber::Ast::Table
   strategy.current_state =  table.raw.map do |row|
-    next_billing_date = str_to_date(row[3])
+    paid_until_date = str_to_date(row[3])
     products = str_to_product_formatting(row[0])
-    products.each { |product| product.billing_cycle.anniversary = next_billing_date }
-    billing_cycle = str_to_billing_cycle(row[0], next_billing_date)
+    products.each { |product| product.billing_cycle.anniversary = paid_until_date}
+    billing_cycle = str_to_billing_cycle(row[0], paid_until_date)
     ostruct = OpenStruct.new(
                :identifier => row[0],
                :products =>  products,
-               :next_payment_date =>  next_billing_date,
+               :paid_until_date =>  paid_until_date,
                :billing_cycle => billing_cycle,
                :active_or_pending? => row[1] =~ /active/,
               )

@@ -14,7 +14,7 @@ module BillingLogic::Strategies
     def add_commands_for_products_to_be_added!
       with_products_to_be_added do |group_of_products, date|
         @command_list << create_recurring_payment_command(group_of_products, 
-                                                          :next_payment_date => date,
+                                                          :paid_until_date => date,
                                                           :period => extract_period_from_product_list(group_of_products))
       end
     end

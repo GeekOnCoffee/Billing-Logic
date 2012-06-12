@@ -18,7 +18,7 @@ module BillingLogic
     end
     class BasicBuilder
       class << self
-        def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today})
+        def create_recurring_payment_commands(products, opts = {:paid_until_date => Date.today})
           raise Exception.new('Implement me')
         end
 
@@ -42,13 +42,13 @@ module BillingLogic
 
     class WordBuilder < BasicBuilder
       class << self
-        def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today})
+        def create_recurring_payment_commands(products, opts = {:paid_until_date => Date.today})
           products.map do |product|
             initial_payment_string = product.initial_payment.zero? ? '' : " with initial payment set to $#{BuilderHelpers.money(product.initial_payment)}" 
             if product.billing_cycle.frequency == 1
-              "add #{product.identifier} on #{opts[:next_payment_date].strftime('%m/%d/%y')}#{initial_payment_string}"
+              "add #{product.identifier} on #{opts[:paid_until_date].strftime('%m/%d/%y')}#{initial_payment_string}"
             else
-              "add #{product.identifier} on #{opts[:next_payment_date].strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}#{initial_payment_string}"
+              "add #{product.identifier} on #{opts[:paid_until_date].strftime('%m/%d/%y')} renewing every #{product.billing_cycle.frequency} #{product.billing_cycle.period}#{initial_payment_string}"
             end
           end
         end
@@ -58,13 +58,13 @@ module BillingLogic
     class AggregateWordBuilder < BasicBuilder
       class << self
         include CommandBuilders::BuilderHelpers
-        def create_recurring_payment_commands(products, opts = {:next_payment_date => Date.today, :price => nil, :frequency => 1, :period => nil})
+        def create_recurring_payment_commands(products, opts = {:paid_until_date => Date.today, :price => nil, :frequency => 1, :period => nil})
           product_ids = products.map { |product| product.identifier }.join(' & ')
           price = opts[:price] || products.inject(0){ |k, product| k += product.price; k }
           price_string = BuilderHelpers.money(price)
           initial_payment = opts[:initial_payment] || products.map { |product| product.initial_payment || 0 }.reduce(0) { |a, e| a + e }
           initial_payment_string = initial_payment.zero? ? '' : " with initial payment set to $#{initial_payment.to_i}"
-          "add (#{product_ids}) @ $#{price_string}#{periodicity_abbrev(opts[:period])} on #{opts[:next_payment_date].strftime('%m/%d/%y')}#{initial_payment_string}"
+          "add (#{product_ids}) @ $#{price_string}#{periodicity_abbrev(opts[:period])} on #{opts[:paid_until_date].strftime('%m/%d/%y')}#{initial_payment_string}"
         end
       end
     end

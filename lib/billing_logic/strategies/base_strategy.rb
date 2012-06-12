@@ -50,7 +50,7 @@ module BillingLogic::Strategies
     end
 
     def removed_obsolete_subscriptions(subscriptions)
-      subscriptions.reject{|sub| !sub.next_payment_date || sub.next_payment_date < today }
+      subscriptions.reject{|sub| !sub.paid_until_date || sub.paid_until_date < today }
     end
 
     def calculate_list
@@ -97,7 +97,7 @@ module BillingLogic::Strategies
 
     def next_payment_date_from_profile_with_product(product, opts = {:active => false})
       profiles_by_status(opts[:active]).map do |profile|
-        profile.next_payment_date if ProductComparator.new(product).in_class_of?(profile.products)
+        profile.paid_until_date if ProductComparator.new(product).in_class_of?(profile.products)
       end.compact.max
     end
 
@@ -155,12 +155,12 @@ module BillingLogic::Strategies
 
             @command_list << remove_product_from_payment_profile(profile.identifier,
                                                                  removed_products_from_profile(profile),
-                                                                refund_options)
+                                                                 refund_options)
           else
 
             @command_list << cancel_recurring_payment_command(profile.identifier, refund_options)
             @command_list << create_recurring_payment_command(remaining_products, 
-                                                              :next_payment_date => profile.next_payment_date,
+                                                              :paid_until_date => profile.paid_until_date,
                                                               :period => extract_period_from_product_list(remaining_products))
           end
         end
@@ -207,7 +207,7 @@ module BillingLogic::Strategies
       payment_command_builder_class.remove_product_from_payment_profile(profile_id, removed_products, opts)
     end
 
-    def create_recurring_payment_command(products, opts = {:next_payment_date => Date.today})
+    def create_recurring_payment_command(products, opts = {:paid_until_date => Date.today})
       payment_command_builder_class.create_recurring_payment_commands(products, opts)
     end
 

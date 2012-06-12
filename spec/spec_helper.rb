@@ -16,7 +16,7 @@ end
 class MockProduct
   include BillingLogic::CommandBuilders::BuilderHelpers
 
-  attr_accessor :id, :name, :price, :billing_cycle, :initial_payment
+  attr_accessor :identifier, :name, :price, :billing_cycle, :initial_payment
   def initialize(opts ={})
     opts.each do |k, v|
       self.send("#{k}=", v)
@@ -29,7 +29,7 @@ class MockProduct
 end
 
 class MockProfile
-  attr_accessor :id, :products, :price, :next_payment_date, :billing_cycle, :active_or_pending
+  attr_accessor :identifier, :products, :price, :paid_until_date, :billing_cycle, :active_or_pending
   def initialize(opts ={})
     opts.each do |k, v|
       self.send("#{k}=", v)
