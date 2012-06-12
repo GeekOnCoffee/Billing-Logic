@@ -15,18 +15,18 @@ Feature: Same Day Cancellation Policy
     Then  I expect the following action: <actions>
     Examples: A customer that have made a payment of $30 the same day of cancellation
       | strategy                     | grace period | payment made                    | desired state | actions                    |
-      | Independent Payment Strategy | 24 hours     | paid $30 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $30 now |
-      | a Single Payment Strategy    | 24 hours     | paid $30 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $30 now |
+      | Independent Payment Strategy | 24 hours     | paid $30 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $30.00 now |
+      | a Single Payment Strategy    | 24 hours     | paid $30 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $30.00 now |
 
     Examples: A customer that made a refundable payment greater than the monthly payment because of a startup fee
       | strategy                     | grace period | payment made                    | desired state | actions                   |
-      | Independent Payment Strategy | 24 hours     | paid $40 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $40 now |
-      | a Single Payment Strategy    | 24 hours     | paid $40 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $40 now |
+      | Independent Payment Strategy | 24 hours     | paid $40 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $40.00 now |
+      | a Single Payment Strategy    | 24 hours     | paid $40 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $40.00 now |
 
     Examples: A customer that made a refundable payment lesser than the monthly payment because of an initial discount
       | strategy                     | grace period              | payment made                    | desired state | actions                   |
-      | Independent Payment Strategy | 24 hours                  | paid $20 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $20 now |
-      | a Single Payment Strategy    | 24 hours                  | paid $20 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $20 now |
+      | Independent Payment Strategy | 24 hours                  | paid $20 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $20.00 now |
+      | a Single Payment Strategy    | 24 hours                  | paid $20 for A @ $30 on 3/15/12 | nothing       | cancel and disable A @ $30/mo with refund $20.00 now |
 
 
   Scenario Outline: User subscribes, then cancels not within the grace period

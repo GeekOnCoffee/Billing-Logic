@@ -73,7 +73,7 @@ Feature: Independent Payment Strategy
 
      Examples: changing the periodicity of product A from monthly to yearly
        | desired state            | action                                                                            |
-       | A @ $99/yr, B @ $20/mo   | cancel A @ $30/mo now, add A @ $99/yr on 04/01/13 with initial payment set to $99 |
+       | A @ $99/yr, B @ $20/mo   | cancel A @ $30/mo now, add A @ $99/yr on 04/01/13 with initial payment set to $99.00 |
 
      Examples: 
       Adding a new product D, 
@@ -81,7 +81,7 @@ Feature: Independent Payment Strategy
       Changing the periodicity of A product, 
       Removing product B
        | desired state                      | action                                                                                                                                                           |
-       | A @ $60/yr, C @ $50/yr, D @ $40/yr | cancel A @ $30/mo now, add A @ $60/yr on 04/01/13 with initial payment set to $60, cancel B @ $20/mo now, add C @ $50/yr on 04/25/12, add D @ $40/yr on 03/15/12 |
+       | A @ $60/yr, C @ $50/yr, D @ $40/yr | cancel A @ $30/mo now, add A @ $60/yr on 04/01/13 with initial payment set to $60.00, cancel B @ $20/mo now, add C @ $50/yr on 04/25/12, add D @ $40/yr on 03/15/12 |
 
        #  """
        #                                                                         cancel A @ $30 now, 
