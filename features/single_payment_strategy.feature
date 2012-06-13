@@ -28,8 +28,8 @@ Feature: Single Payment Strategy
 
     Examples: Removing partial products
       | desired state             | action                                                                                  |
-      | A @ $30/mo                | remove B @ $20/mo & C @ $20/mo from (A @ $30/mo & B @ $20/mo & C @ $20/mo) @ $70/mo now |
-      | A @ $30/mo, C @ $20/mo    | remove B @ $20/mo from (A @ $30/mo & B @ $20/mo & C @ $20/mo) @ $70/mo now              |
+      | A @ $30/mo                | remove (B @ $20/mo & C @ $20/mo) from (A @ $30/mo & B @ $20/mo & C @ $20/mo) @ $70/mo now |
+      | A @ $30/mo, C @ $20/mo    | remove (B @ $20/mo) from (A @ $30/mo & B @ $20/mo & C @ $20/mo) @ $70/mo now              |
 
   Scenario Outline: Changing a current payment profile to a different product
     Given I support a Single Payment Strategy

@@ -35,7 +35,7 @@ module BillingLogic
         end
 
         def remove_product_from_payment_profile(profile_id, products, opts)
-          "remove #{products.map { |product| product.identifier }.join(" & ")} from #{profile_id} #{"with refund $#{BuilderHelpers.money(opts[:refund])}" if opts[:refund]}now"
+          "remove (#{products.map { |product| product.identifier }.join(" & ")}) from #{profile_id} #{"with refund $#{BuilderHelpers.money(opts[:refund])}" if opts[:refund]}now"
         end
       end
     end

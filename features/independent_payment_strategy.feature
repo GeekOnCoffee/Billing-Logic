@@ -18,17 +18,17 @@ Feature: Independent Payment Strategy
       Given I support Independent Payment Strategy
       And   Today is 3/15/12
       And   I have the following subscriptions:
-        | (A @ $30/mo & B @ $40/mo) @ $70/mo | active | and the next billing date is on | 4/1/12 |
+        | (A @ $30/mo & B @ $40/mo & C @ $25/mo) @ $95/mo | active | and the next billing date is on | 4/1/12 |
      When  I change to having: <desired state>
      Then  I expect the following action: <action>
      Examples: Removing all products
        | desired state | action               |
-       | nothing       | cancel (A @ $30/mo & B @ $40/mo) @ $70/mo now |
+       | nothing       | cancel (A @ $30/mo & B @ $40/mo & C @ $25/mo) @ $95/mo now |
 
      Examples: Removing partial products
        | desired state                | action                  |
-       | A @ $30/mo                   | remove B @ $40/mo from (A @ $30/mo & B @ $40/mo) @ $70/mo now   |
-       | B @ $40/mo                   | remove A @ $30/mo from (A @ $30/mo & B @ $40/mo) @ $70/mo now   |
+       | A @ $30/mo                   | remove (B @ $40/mo & C @ $25/mo) from (A @ $30/mo & B @ $40/mo & C @ $25/mo) @ $95/mo now   |
+       | B @ $40/mo & C @ $25/mo      | remove (A @ $30/mo) from (A @ $30/mo & B @ $40/mo & C @ $25/mo) @ $95/mo now   |
 
    Scenario Outline: Removing a product
      Given I support Independent Payment Strategy
