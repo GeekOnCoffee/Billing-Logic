@@ -1,4 +1,4 @@
-DATE = Transform /^(\d+\/\d+\/\d+)$/ do |date|
+DATE = Transform /^#{BillingLogic::CommandBuilders::DATE_REGEX}$/ do |date|
   str_to_date(date)
 end
 
@@ -10,11 +10,11 @@ BILLING_CYCLE = Transform /^(\/mo|\/yr|every \d+ (?:day|month|year))$/ do |strin
   str_to_billing_cycle(string)
 end
 
-MONEY = Transform /^\$([\d\.]+)$/ do |money|
+MONEY = Transform /^#{BillingLogic::CommandBuilders::MONEY_REGEX}$/ do |money|
   money
 end
 
-SINGLE_PRODUCT_REGEX = /(\w+) @ \$([\d\.]+)(\/mo|\/yr)?/
+
 PRODUCT_FORMATTING = Transform /^((?:\w+) @ (?:#{MONEY})(?:|\/mo|\/yr)(?:(?:, | & )(?:\w+) @ (?:#{MONEY})(?:|\/mo|\/yr))*)$/ do |products|
   products.split(/, /).map do |string|
     str_to_product_formatting(string) 

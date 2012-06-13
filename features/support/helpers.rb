@@ -49,16 +49,9 @@ module StringParsers
      Date.strptime(string, '%m/%d/%y')
   end
 
-  def str_to_product_formatting(strings)
-    strings.split(/ & /).map do |string|
-      string =~ SINGLE_PRODUCT_REGEX
-      billing_cycle = $3 ? BillingLogic::BillingCycle.new(:frequency => 1, :period => $3.include?('mo') ? :month : :year) : nil
-      OpenStruct.new(:name => $1, 
-                     :price => $2.to_i, 
-                     :identifier => "#{$1} @ $#{$2}#{$3}", 
-                     :billing_cycle => billing_cycle, 
-                     :payments => [],
-                     :initial_payment => 0)
+  def str_to_product_formatting(str)
+    str.split(/ & /).map do |string|
+      BillingLogic::CommandBuilders::ProductStub.parse(string)
     end
   end
 
