@@ -61,9 +61,9 @@ module StringParsers
 
   def command_list_should_include(command, bool = true)
     if bool
-      strategy.command_list.should include(command)
+      strategy.command_list.should include(BillingLogic::CommandBuilders::ActionObject.from_string(command).to_s)
     else
-      strategy.command_list.should_not include(command)
+      strategy.command_list.should_not include(BillingLogic::CommandBuilders::ActionObject.from_string(command).to_s)
     end
   end
 

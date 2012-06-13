@@ -12,9 +12,9 @@ module BillingLogic
 
     class ProductList
       def self.parse(string, options = {})
-        if (products = (string =~ /\((.*)\)/) ? $1 : nil)
+        if (products = (string =~ /\(([^\(\)]*)\)/) ? $1 : nil)
           products.split(/ & /).map do |product_string|
-            ProductStub.parse(string, options)
+            ProductStub.parse(product_string, options)
           end
         else
           []
@@ -60,9 +60,9 @@ module BillingLogic
           "remove (#{products.map { |product| product.identifier }.join(" & ")}) from [#{profile_id}] #{"with refund $#{BuilderHelpers.money(refund)}" if refund}now"
         when :add
           products.map do |product|
-            initial_payment_string = product.initial_payment.zero? ? '' : " with initial payment set to $#{BuilderHelpers.money(product.initial_payment)}"
+            initial_payment_string = total_initial_payment.zero? ? '' : " with initial payment set to $#{BuilderHelpers.money(total_initial_payment)}"
             "add (#{product.identifier}) on #{starts_on.strftime('%m/%d/%y')}#{initial_payment_string}"
-          end
+          end.to_s
         when :add_bundle
           product_ids = products.map { |product| product.identifier }.join(' & ')
           price ||= products.inject(0){ |k, product| k += product.price; k }
@@ -88,15 +88,15 @@ module BillingLogic
                             when :cancel, :remove
                               string =~ /\[(.*)\]/ ? $1 : nil
                             end
-        opts[:refund]     = (string =~ /with refund \$(#{BillingLogic::CommandBuilders::MONEY_REGEX})/) ? Float($1) : nil
-        opts[:initial_payment] = (string =~ /with initial payment set to \$(#{BillingLogic::CommandBuilders::MONEY_REGEX})/) ? Float($1) : nil
-        opts[:price]      = (string =~ /add \(.*\) @ \$(#{BillingLogic::CommandBuilders::MONEY_REGEX})/) ? Float($1) : nil
+        opts[:refund]     = (string =~ /with refund #{BillingLogic::CommandBuilders::MONEY_REGEX}/) ? Float($1) : nil
+        opts[:initial_payment] = (string =~ /with initial payment set to #{BillingLogic::CommandBuilders::MONEY_REGEX}/) ? Float($1) : nil
+        opts[:price]      = (string =~ /add \(.*\) @ #{BillingLogic::CommandBuilders::MONEY_REGEX}/) ? Float($1) : nil
 
         self.new(opts)
       end
 
       def total_initial_payment
-        initial_payment ||= products.map { |product| product.initial_payment || 0 }.reduce(0) { |a, e| a + e }
+        @initial_payment ||= products.map { |product| product.initial_payment || 0 }.reduce(0) { |a, e| a + e }
       end
       
       protected
