@@ -126,14 +126,14 @@ module BillingLogic
         def cancel_recurring_payment_commands(profile_id, opts = {})
           ActionObject.new(opts.merge(:action     => :cancel,
                                       :profile_id => profile_id,
-                                      :when       => time.now)).to_s
+                                      :when       => time.now))
         end
 
         def remove_product_from_payment_profile(profile_id, products, opts)
           ActionObject.new(opts.merge(:action     => :remove,
                                       :products   => products,
                                       :profile_id => profile_id,
-                                      :when       => time.now)).to_s
+                                      :when       => time.now))
         end
       end
     end
@@ -144,7 +144,7 @@ module BillingLogic
           ActionObject.new(opts.merge(:action     => :add,
                                       :products   => products,
                                       :starts_on  => opts[:paid_until_date],
-                                      :when       => time.now)).to_s
+                                      :when       => time.now))
         end
       end
     end
@@ -156,7 +156,7 @@ module BillingLogic
           ActionObject.new(opts.merge(:action     => :add_bundle,
                                       :products   => products,
                                       :starts_on  => opts[:paid_until_date],
-                                      :when       => time.now)).to_s
+                                      :when       => time.now))
           
         end
       end

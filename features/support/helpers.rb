@@ -60,10 +60,11 @@ module StringParsers
   end
 
   def command_list_should_include(command, bool = true)
+    command_list = strategy.command_list.map { |obj| obj.to_s }
     if bool
-      strategy.command_list.should include(BillingLogic::CommandBuilders::ActionObject.from_string(command).to_s)
+      command_list.should include(BillingLogic::CommandBuilders::ActionObject.from_string(command).to_s)
     else
-      strategy.command_list.should_not include(BillingLogic::CommandBuilders::ActionObject.from_string(command).to_s)
+      command_list.should_not include(BillingLogic::CommandBuilders::ActionObject.from_string(command).to_s)
     end
   end
 
