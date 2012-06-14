@@ -1,9 +1,10 @@
+= Do Not Use in Production
+This is very alpha state & probably an ill conceived idea
+
 = Billing Logic
 BillingAccount
 Product
 Subscription
-
-
 
 == BillingLogic::Strategies
 There currently 2 strategies available: IndependentPaymentStrategy & SinglePaymentStrategy
@@ -21,7 +22,6 @@ A PaymentProfile must have the following fields
   :next_payment_date 		# DateTime of the next due payment
   :billing_cycle 		# A BillingLogic::BillingCycle
   :active_or_pending? 		# Is this a current, not cancelled nor suspended profile
-  :last_payment_refundable? 	# Is the last payment made refundable
   :last_refundable_payment	# The amount of the last payment that is refundable
 
 == BillingLogic::Product
