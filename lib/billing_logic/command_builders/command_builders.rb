@@ -123,9 +123,10 @@ module BillingLogic
           Time
         end
 
-        def cancel_recurring_payment_commands(profile_id, opts = {})
+        def cancel_recurring_payment_commands(profile, opts = {})
           ActionObject.new(opts.merge(:action     => :cancel,
-                                      :profile_id => profile_id,
+                                      :profile_id => profile.identifier,
+                                      :products   => profile.products,
                                       :when       => time.now))
         end
 

@@ -121,6 +121,7 @@ module BillingLogic::Strategies
       Date.today
     end
 
+    public
     def profiles_by_status(active_or_pending = nil)
       current_state.reject { |profile| !profile.active_or_pending? == active_or_pending}
     end
@@ -143,7 +144,7 @@ module BillingLogic::Strategies
 
         if remaining_products.empty? # all products in payment profile needs to be removed
 
-          @command_list << cancel_recurring_payment_command(profile.identifier, refund_options)
+          @command_list << cancel_recurring_payment_command(profile, refund_options)
 
         elsif remaining_products.size == profile.products.size # nothing has changed
           #
@@ -158,7 +159,7 @@ module BillingLogic::Strategies
                                                                  refund_options)
           else
 
-            @command_list << cancel_recurring_payment_command(profile.identifier, refund_options)
+            @command_list << cancel_recurring_payment_command(profile, refund_options)
             @command_list << create_recurring_payment_command(remaining_products, 
                                                               :paid_until_date => profile.paid_until_date,
                                                               :period => extract_period_from_product_list(remaining_products))
@@ -199,8 +200,8 @@ module BillingLogic::Strategies
     end
 
     # these messages seems like they should be pluggable
-    def cancel_recurring_payment_command(profile_id, opts = {})
-      payment_command_builder_class.cancel_recurring_payment_commands(profile_id, opts)
+    def cancel_recurring_payment_command(profile, opts = {})
+      payment_command_builder_class.cancel_recurring_payment_commands(profile, opts)
     end
 
     def remove_product_from_payment_profile(profile_id, removed_products, opts = {})
@@ -255,8 +256,9 @@ module BillingLogic::Strategies
       end
 
       def same_price?(other_product)
-        @product.price == other_product.price
+        BigDecimal(@product.price.to_s) == BigDecimal(other_product.price.to_s)
       end
+
     end
 
     def reset_command_list!
